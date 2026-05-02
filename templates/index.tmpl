@@ -1,0 +1,16 @@
+{{ define "index.html" }}
+{{ template "header.tmpl" . }}
+    
+    <div class="container main p-5">
+      <h2 class="d-inline-flex w-100 justify-content-between mb-3">
+        <div class="">Days Since Last...</div>
+        <div>
+          <a class="btn btn-primary py-2 px-3" role="button" href="/create">
+            Create Counter
+          </a>
+        </div>
+      </h2>
+    </div>
+  </body>
+</html>
+{{end}}
