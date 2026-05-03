@@ -30,6 +30,8 @@ func main() {
 	router.StaticFS("/static", http.Dir("static"))
 	router.LoadHTMLGlob("templates/*")
 
+	//meow
+
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title": "My Site",
