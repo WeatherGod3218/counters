@@ -2,15 +2,31 @@
 {{ template "header.tmpl" . }}
     
     <div class="container main p-5">
-      <h2 class="d-inline-flex w-100 justify-content-between mb-3">
-        <div class="">Days Since Last...</div>
+        <h2 class="text-center w-100 mb-3">
+    <div class="">Days Since Last...</div>
+    </h2>
+        <br />
         <div>
-          <a class="btn btn-primary py-2 px-3" role="button" href="/create">
-            Create Counter
-          </a>
+        <ul class="list-group list-unstyled text-wrap text-break">
+          {{ range $i, $poll := .Polls }}
+          <li>
+            <a
+              class="list-group-item list-group-item-action p-3"
+              href="/poll/{{ $poll.Id }}"
+            >
+              <span><strong>
+                {{ $poll.Title }}
+              </strong></span>
+
+              <span
+                ><i>(created by {{ $poll.CreatedBy }})</i></span
+              >
+            </a>
+          </li>
+                    {{ end }}
+                </ul>
+            </div>
         </div>
-      </h2>
-    </div>
-  </body>
+    </body>
 </html>
 {{end}}

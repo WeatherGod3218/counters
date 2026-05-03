@@ -1,0 +1,10 @@
+services:
+  Counters:
+    build: 
+      context: .
+      dockerfile: Containerfile
+    container_name: CountersContainer
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env

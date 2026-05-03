@@ -2,13 +2,10 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	//cshAuth "github.com/computersciencehouse/csh-auth"
 	"github.com/gin-gonic/gin"
 )
-
-var SERVER_HOST = os.Getenv("SERVER_HOST")
 
 func main() {
 	router := gin.Default()
