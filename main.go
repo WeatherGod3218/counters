@@ -10,6 +10,8 @@ import (
 func main() {
 	router := gin.Default()
 
+	router.StaticFS("/static", http.Dir("static"))
+	router.LoadHTMLGlob("templates/*")
 	// csh := cshAuth.CSHAuth{}
 
 	// csh.Init(
@@ -26,9 +28,6 @@ func main() {
 	// router.GET("/auth/login", csh.AuthRequest)
 	// router.GET("/auth/callback", csh.AuthCallback)
 	// router.GET("/auth/logout", csh.AuthLogout)
-
-	router.StaticFS("/static", http.Dir("static"))
-	router.LoadHTMLGlob("templates/*")
 
 	//meow
 

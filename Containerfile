@@ -1,19 +1,19 @@
-FROM golang:1.25-alpine AS builder
+FROM docker.io/golang:1.25-alpine AS build
 
-WORKDIR /app
-
-COPY go.mod go.sum ./
+WORKDIR /src/
+RUN apk add git
+COPY go.* .
 RUN go mod download
+COPY database database
+COPY *.go .
+RUN go build -v -o counters
 
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o server .
+FROM docker.io/alpine
+RUN apk add --no-cache tzdata
+ENV TZ=America/New_York
+RUN cp /usr/share/zoneinfo/America/New_York /etc/localtime
+COPY static /static
+COPY templates /templates
+COPY --from=build /src/counters /counters
 
-FROM alpine:latest
-
-WORKDIR /app
-
-COPY --from=builder /app/server .
-
-EXPOSE 8080
-
-CMD ["./server"]
+ENTRYPOINT [ "/counters" ]
