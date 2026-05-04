@@ -5,6 +5,7 @@ RUN apk add git
 COPY go.* .
 RUN go mod download
 COPY database database
+COPY logging logging
 COPY *.go .
 RUN go build -v -o counters
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	//cshAuth "github.com/computersciencehouse/csh-auth"
+	"github.com/WeatherGod3218/counters/database"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,6 +13,8 @@ func main() {
 
 	router.StaticFS("/static", http.Dir("static"))
 	router.LoadHTMLGlob("templates/*")
+
+	database.Client = database.Connect()
 	// csh := cshAuth.CSHAuth{}
 
 	// csh.Init(
@@ -31,11 +34,7 @@ func main() {
 
 	//meow
 
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "My Site",
-		})
-	})
+	router.GET("/", GetHomePage)
 
 	router.Run(":8080")
 }
