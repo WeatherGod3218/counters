@@ -1,5 +1,5 @@
 # counters
-Days Since Last Useless House Service was made
+Days Since Last Useless House Service was Mode: 0 
 ```mermaid
 erDiagram
 

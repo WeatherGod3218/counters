@@ -21,7 +21,7 @@ func main() {
 	// 	os.Getenv("AUTH_OIDC_ID"),
 	// 	os.Getenv("AUTH_OIDC_SECRET"),
 	// 	os.Getenv("AUTH_JWC_SECRET"),
-	// 	os.Getenv("VOTE_STATE"),
+	// 	os.Getenv("AUTH_STATE"),
 	// 	os.Getenv("SERVER_HOST"),
 	// 	os.Getenv("SERVER_HOST")+"/auth/callback",
 	// 	os.Getenv("SERVER_HOST")+"/auth/login",
@@ -35,6 +35,11 @@ func main() {
 	//meow
 
 	router.GET("/", GetHomePage)
+
+	router.GET("/create", GetCreatePage)
+	router.POST("/create", CreateCounter)
+
+	router.GET("poll/:id", GetCounterId)
 
 	router.Run(":8080")
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/WeatherGod3218/counters/database"
 	"github.com/WeatherGod3218/counters/logging"
@@ -24,8 +25,52 @@ func GetHomePage(c *gin.Context) {
 	})
 }
 
-func GetCreate(c *gin.Context) {
+func GetCreatePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "create.tmpl", gin.H{
 		"No": "Yes",
 	})
+}
+
+func GetCounterId(c *gin.Context) {
+	counter, err := database.GetCounter(c, c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.HTML(200, "counter.tmpl", gin.H{
+		"Id":          counter.Id,
+		"Title":       counter.Title,
+		"Description": counter.Description,
+	})
+}
+
+func CreateCounter(c *gin.Context) {
+
+	reset := &database.Reset{
+		Reporter:    "A Person",
+		Instigator:  c.PostForm("reset-user"),
+		Description: c.PostForm("reset-description"),
+		Timestamp:   time.Now(),
+	}
+
+	newHistory := make([]database.Reset, 1)
+	newHistory[0] = *reset
+
+	counter := &database.Counter{
+		Id:          "",
+		CreatedBy:   "A Person",
+		Title:       c.PostForm("title"),
+		Description: c.PostForm("description"),
+		LastReset:   *reset,
+		History:     newHistory,
+	}
+
+	counterId, err := database.CreateCounter(c, counter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/counters/"+counterId)
 }

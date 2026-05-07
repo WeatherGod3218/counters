@@ -31,11 +31,25 @@ func CreateCounter(ctx context.Context, counter *Counter) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	result, err := Client.Database(db).Collection("polls").InsertOne(ctx, counter)
+	result, err := Client.Database(db).Collection("counters").InsertOne(ctx, counter)
 	if err != nil {
 		return "", err
 	}
 	return result.InsertedID.(bson.ObjectID).Hex(), nil
+}
+
+func GetCounter(ctx context.Context, id string) (*Counter, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	objId, _ := bson.ObjectIDFromHex(id)
+	var counter Counter
+
+	if err := Client.Database(db).Collection("counters").FindOne(ctx, bson.M{"_id": objId}).Decode(&counter); err != nil {
+		return nil, err
+	}
+
+	return &counter, nil
 }
 
 func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
@@ -99,6 +113,14 @@ func GetActiveCounters(ctx context.Context) ([]*Counter, error) {
 
 	counters = append(counters,
 		&Counter{Id: "3", Title: "meow", Description: "mweoowwww", CreatedBy: "weather", LastReset: meowReset, History: meowResetHistory},
+	)
+
+	igorReset := Reset{Instigator: "Cooper", Reporter: "Eli Mares", Description: "Taking a wild guess all the way from wisconsin", Timestamp: time.Date(2026, 5, 6, 12, 51, 0, 0, time.UTC)}
+	igorResetHistory := make([]Reset, 1)
+	igorResetHistory[0] = igorReset
+
+	counters = append(counters,
+		&Counter{Id: "4", Title: "Cooper last played hollow knight", Description: "Hi Cooper!", CreatedBy: "weather", LastReset: igorReset, History: igorResetHistory},
 	)
 
 	return counters, nil
