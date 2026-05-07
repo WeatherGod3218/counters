@@ -15,7 +15,7 @@
             <ul class="list-group list-unstyled text-wrap text-break">
                 {{ range $i, $counter := .Counters }}
                     <li>
-                        <a class="text-center list-group-item list-group-item-action p-3" href="/counter/{{ $counter.Id }}">
+                        <a class="text-center list-group-item list-group-item-action p-3" href="/counter/{{ $counter.IDHex }}">
                             <span class="fs-5"> <i>{{ $counter.Title }}</i></span>
                             <br/>
                             <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.LastReset.Timestamp }}"> </span>

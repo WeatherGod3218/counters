@@ -1,4 +1,5 @@
-    {{ template "create.tmpl" . }}
+    {{ define "create.tmpl"}}
+    {{ template "header.tmpl" . }}
 
     <div class="container main p-5">
       <h2 class="mb-4">Create Counter</h2>
@@ -77,3 +78,5 @@
     </script>
   </body>
 </html>
+
+{{end}}
