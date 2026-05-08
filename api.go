@@ -23,7 +23,7 @@ func GetHomePage(c *gin.Context) {
 	}
 
 	sort.Slice(counters, func(i, j int) bool {
-		return counters[i].LastReset.Timestamp.Before(counters[j].LastReset.Timestamp)
+		return counters[i].LastReset.Timestamp.After(counters[j].LastReset.Timestamp)
 	})
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
@@ -52,31 +52,59 @@ func GetCounterId(c *gin.Context) {
 }
 
 func CreateCounter(c *gin.Context) {
+	// convert time to New York
+	logging.Logger.WithFields(logrus.Fields{"timeOnForm": c.PostForm("reset-time"), "module": "api", "method": "GetHomePage"}).Info("Time Registered On Form")
+
+	timeZone, _ := time.LoadLocation("America/New_York")
+	resetTime := c.PostForm("reset-time")
+
+	currentTime := time.Now()
+
+	timeConverted, err := time.ParseInLocation("2006-01-02T15:04", resetTime, timeZone)
+	if err != nil {
+		timeConverted = currentTime
+	}
+
+	if timeConverted.After(currentTime) {
+		timeConverted = currentTime
+	}
 
 	reset := &database.Reset{
 		Reporter:    "A Person",
 		Instigator:  c.PostForm("reset-user"),
 		Description: c.PostForm("reset-description"),
-		Timestamp:   time.Now(),
+		Timestamp:   timeConverted,
 	}
 
 	newHistory := make([]database.Reset, 1)
 	newHistory[0] = *reset
 
+	newId := bson.NewObjectID()
+
 	counter := &database.Counter{
-		Id:          bson.NewObjectID(),
+		Id:          newId,
 		CreatedBy:   "A Person",
 		Title:       c.PostForm("title"),
 		Description: c.PostForm("description"),
 		LastReset:   *reset,
-		History:     newHistory,
 	}
 
-	counterId, err := database.CreateCounter(c, counter)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	history := &database.History{
+		Id:      newId,
+		History: newHistory,
+	}
+
+	counterError := database.CreateCounter(c, counter)
+	if counterError != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": counterError.Error()})
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/counters/"+counterId)
+	historyError := database.CreateHistory(c, history)
+	if historyError != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": historyError.Error()})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/counters/"+newId.Hex())
 }

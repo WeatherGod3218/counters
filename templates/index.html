@@ -6,16 +6,13 @@
             <div class="">Days Since Last...</div>
         </h2>
         <br/>
-        <form class="d-flex my-2 my-lg-0 mx-auto" style="max-width: 400px;">
-            <input class="form-control" type="text" placeholder="Find Counters">
-            <button class="btn btn-primary ms-2" type="submit">Search</button>
-        </form>
+        <input class="form-control" type="text" placeholder= "Find Counters">
         <br/>
         <div>
             <ul class="list-group list-unstyled text-wrap text-break">
                 {{ range $i, $counter := .Counters }}
                     <li>
-                        <a class="text-center list-group-item list-group-item-action p-3" href="/counter/{{ $counter.IDHex }}">
+                        <a class="text-center list-group-item list-group-item-action p-3" href="/counters/{{ $counter.IDHex }}">
                             <span class="fs-5"> <i>{{ $counter.Title }}</i></span>
                             <br/>
                             <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.LastReset.Timestamp }}"> </span>
@@ -27,10 +24,23 @@
             </ul>
         </div>
         <script>
+        (() => {
+            'use strict'
+
             document.querySelectorAll(".days-since").forEach(el => {
                 const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);
                 el.textContent = days;
             });
+
+            document.querySelector('input').addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+
+                document.querySelectorAll('ul.list-group li').forEach(li => {
+                    const title = li.querySelector('span.fs-5').textContent.toLowerCase();
+                    li.style.display = title.includes(query) ? '' : 'none';
+                });
+            });
+            })()
         </script>
     </div>
 </body>

@@ -17,5 +17,15 @@ erDiagram
         list[RESET] history
     }
 
-
 ```
+
+__TODO__
+
+[] Load History
+
+[] Allow adding a reset
+
+[] Implement csh-auth
+
+[] Make Sections Smaller in Width
+

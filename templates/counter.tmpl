@@ -1,9 +1,36 @@
     {{ define "counter.tmpl"}}
     {{ template "header.tmpl" . }}
 
-    <div class="container main p-5">
-      <h2 class="text-center text-break">{{.Title}}</h2>
+    <div class="container main p-3">
+      <h2 class="text-center text-break display-5">{{.Title}}</h2>
+      <h5 class="text-center text-break">{{.Description}}</h5>
+      <h2 class="text-center text-break">{{.Description}}</h2>
+      <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.LastReset.Timestamp }}"> </span>
+
+      <form action="/reset" method="POST" class="w-50 mx-auto">
+        <input type="submit" class="btn btn-primary my-2 mx-auto" value="Reset">
+        <input type="submit" class="btn btn-primary my-2 mx-auto" value="Reset">
+      </form>
     </div>
   </body>
+  <script>
+    (() => {
+      'use strict'
+
+      document.querySelector(".days-since").forEach(el => {
+          const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);
+          el.textContent = days;
+      });
+
+      document.querySelector('input').addEventListener('input', function() {
+          const query = this.value.toLowerCase();
+
+          document.querySelectorAll('ul.list-group li').forEach(li => {
+              const title = li.querySelector('span.fs-5').textContent.toLowerCase();
+              li.style.display = title.includes(query) ? '' : 'none';
+          });
+      });
+    })()
+  </script>
 </html>
 {{ end }}

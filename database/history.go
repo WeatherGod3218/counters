@@ -7,91 +7,92 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type Counter struct {
-	Id          bson.ObjectID `bson:"_id,omitempty"`
-	CreatedBy   string        `bson:"createdBy"`
-	Title       string        `bson:"title"`
-	Description string        `bson:"description"`
-	LastReset   Reset         `bson:"lastReset"`
+// "go.mongodb.org/mongo-driver/v2/bson"
+// "go.mongodb.org/mongo-driver/v2/mongo"
+// "go.mongodb.org/mongo-driver/v2/mongo/options"
+
+type History struct {
+	Id      bson.ObjectID `bson:"_id,omitempty"`
+	History []Reset       `bson:"history"`
 }
 
-func CreateCounter(ctx context.Context, counter *Counter) error {
+func CreateHistory(ctx context.Context, history *History) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	_, err := Client.Database(db).Collection("counters").InsertOne(ctx, counter)
+	_, err := Client.Database(db).Collection("history").InsertOne(ctx, history)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetCounterFromId(ctx context.Context, id string) (*Counter, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+// func GetCounterFromId(ctx context.Context, id string) (*Counter, error) {
+// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+// 	defer cancel()
 
-	objId, _ := bson.ObjectIDFromHex(id)
-	var counter Counter
+// 	objId, _ := bson.ObjectIDFromHex(id)
+// 	var counter Counter
 
-	if err := Client.Database(db).Collection("counters").FindOne(ctx, bson.M{"_id": objId}).Decode(&counter); err != nil {
-		return nil, err
-	}
+// 	if err := Client.Database(db).Collection("counters").FindOne(ctx, bson.M{"_id": objId}).Decode(&counter); err != nil {
+// 		return nil, err
+// 	}
 
-	return &counter, nil
-}
+// 	return &counter, nil
+// }
 
-func GetAllCounters(ctx context.Context) ([]*Counter, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+// func GetAllCounters(ctx context.Context) ([]*Counter, error) {
+// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+// 	defer cancel()
 
-	cursor, err := Client.Database(db).Collection("counters").Find(ctx, bson.M{})
-	if err != nil {
-		return nil, err
-	}
+// 	cursor, err := Client.Database(db).Collection("counters").Find(ctx, bson.M{})
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var counters []*Counter
-	if err := cursor.All(ctx, &counters); err != nil {
-		return nil, err
-	}
+// 	var counters []*Counter
+// 	if err := cursor.All(ctx, &counters); err != nil {
+// 		return nil, err
+// 	}
 
-	return counters, nil
-}
+// 	return counters, nil
+// }
 
-func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+// func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
+// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+// 	defer cancel()
 
-	objId := counter.Id
+// 	objId := counter.Id
 
-	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId},
-		bson.M{
-			"$set":  bson.M{"lastReset": reset},
-			"$push": bson.M{"history": reset},
-		})
-	if err != nil {
-		return err
-	}
+// 	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId},
+// 		bson.M{
+// 			"$set":  bson.M{"lastReset": reset},
+// 			"$push": bson.M{"history": reset},
+// 		})
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (counter *Counter) Close(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+// func (counter *Counter) Close(ctx context.Context) error {
+// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+// 	defer cancel()
 
-	objId := counter.Id
+// 	objId := counter.Id
 
-	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"open": false}})
-	if err != nil {
-		return err
-	}
+// 	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"open": false}})
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (c *Counter) IDHex() string {
-	return c.Id.Hex()
-}
+// func (c *Counter) IDHex() string {
+// 	return c.Id.Hex()
+// }
 
 // func GetActiveCounters(ctx context.Context) ([]*Counter, error) {
 // 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

@@ -46,10 +46,17 @@
             required
           >
         </div>
+        <div class="input-group my-3">
+          <label for="reset-time" class="input-group-text">Time</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              name="reset-time"
+            />
+          </div>
         <input type="submit" class="btn btn-primary my-2" value="Create">
       </form>
     </div>
-      
     <style>
       .required-label::after {
         content: " *";
@@ -60,6 +67,14 @@
       (() => {
         'use strict'
 
+        const input = document.getElementById("reset-time");
+
+        const now = new Date();
+        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        const formatted = local.toISOString().slice(0, 16);
+
+        input.value = formatted;
+        
         // Fetch all the forms we want to apply custom Bootstrap validation styles to
         const forms = document.querySelectorAll('.needs-validation')
 

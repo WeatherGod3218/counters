@@ -39,7 +39,7 @@ func main() {
 	router.GET("/create", GetCreatePage)
 	router.POST("/create", CreateCounter)
 
-	router.GET("counter/:id", GetCounterId)
+	router.GET("counters/:id", GetCounterId)
 
 	router.Run(":8080")
 }
