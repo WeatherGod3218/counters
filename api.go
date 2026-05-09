@@ -61,7 +61,7 @@ func GetResetPage(c *gin.Context) {
 	})
 }
 
-func GetCounterId(c *gin.Context) {
+func LoadCounter(c *gin.Context) {
 	idToUse := c.Param("id")
 
 	counter, cError := database.GetCounterFromId(c, idToUse)
@@ -89,6 +89,7 @@ func ResetCounter(c *gin.Context) {
 	resetTime := translateTime(c.PostForm("reset-time"))
 
 	reset := &database.Reset{
+		Id:          bson.NewObjectID(),
 		Reporter:    tempName,
 		Instigator:  c.PostForm("reset-user"),
 		Description: c.PostForm("reset-description"),
@@ -109,6 +110,7 @@ func CreateCounter(c *gin.Context) {
 	resetTime := translateTime(c.PostForm("reset-time"))
 
 	reset := &database.Reset{
+		Id:          bson.NewObjectID(),
 		Reporter:    tempName,
 		Instigator:  c.PostForm("reset-user"),
 		Description: c.PostForm("reset-description"),
