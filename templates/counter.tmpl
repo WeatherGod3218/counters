@@ -11,29 +11,29 @@
       </form>
       <br/>
       <div>
-          <ul class="list-group list-unstyled text-wrap text-break">
+          <ul class="list-group list-unstyled text-wrap text-break w-75 mx-auto">
               {{ range $i, $reset := .History }}
-                  <li class = "p-4">
-                      <div class="list-group-item p-3">
+                  <li class = "p-2">
+                      <div class="list-group-item p-2">
                         <div class="container">
-                          <div class="row">
+                          {{/* <div class="row">
                             <div class="col-12">
                               <h3 class="text-center my-2 fs-3">{{ $reset.Description }}</h3>
                             </div>
-                          </div>
-
+                          </div> */}}
                           <div class="row">
-                            <div class="col">
-                              <div class="p-2">
-                                <span class="fs-5">{{ $reset.Description }}</span>
-                                <br/>
-                                <span class="days-since fw-bold display-1" data-timestamp="{{ $reset.Timestamp }}"> </span>
-                                <br/>
-                                <span class="description"><i>reported by: {{ $reset.Reporter }} caused by {{ $reset.Instigator }})</i></span>
-                              </div>
+                            <div class="col d-flex flex-column justify-content-center">
+                            	<div class="text-center my-auto">
+									<span class="fs-5">{{ $reset.Description }}</span>
+									<br/>
+									<span class="description"><i>reported by: {{ $reset.Reporter }}</i></span>
+                            	</div>
                             </div>
                             <div class="col">
-                              <div class="p-2 border bg-light">Box 2</div>
+                            	<div class="text-center my-auto">
+									<span class="days-since fw-bold display-3" data-timestamp="{{ $reset.Timestamp }}"> </span>
+									<span class="description d-block">Day(s) Ago</span>
+                            	</div>
                             </div>
                           </div>
                         </div>

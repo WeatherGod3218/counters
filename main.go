@@ -42,7 +42,7 @@ func main() {
 	router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
-	router.GET("counters/:id", GetCounterId)
+	router.GET("counters/:id", LoadCounter)
 
 	router.GET("/create", GetCreatePage)
 	router.POST("/create", CreateCounter)
