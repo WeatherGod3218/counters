@@ -13,11 +13,11 @@
                 {{ range $i, $counter := .Counters }}
                     <li>
                         <a class="text-center list-group-item list-group-item-action p-3" href="/counters/{{ $counter.IDHex }}">
-                            <span class="fs-5"> <i>{{ $counter.Title }}</i></span>
+                            <span class="fs-5">{{ $counter.Title }}</span>
                             <br/>
                             <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.LastReset.Timestamp }}"> </span>
                             <br/>
-                            <span class="description">{{ $counter.LastReset.Description }} <i>(caused by {{ $counter.LastReset.Instigator }})</i></span>
+                            <span class="description"><i>{{ $counter.LastReset.Description }} (caused by {{ $counter.LastReset.Instigator }})</i></span>
                         </a>
                     </li>
                 {{ end }}

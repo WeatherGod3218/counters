@@ -27,36 +27,19 @@ func CreateHistory(ctx context.Context, history *History) error {
 	return nil
 }
 
-// func GetCounterFromId(ctx context.Context, id string) (*Counter, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-// 	defer cancel()
+func GetHistoryFromId(ctx context.Context, id string) (*History, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
-// 	objId, _ := bson.ObjectIDFromHex(id)
-// 	var counter Counter
+	objId, _ := bson.ObjectIDFromHex(id)
+	var history History
 
-// 	if err := Client.Database(db).Collection("counters").FindOne(ctx, bson.M{"_id": objId}).Decode(&counter); err != nil {
-// 		return nil, err
-// 	}
+	if err := Client.Database(db).Collection("history").FindOne(ctx, bson.M{"_id": objId}).Decode(&history); err != nil {
+		return nil, err
+	}
 
-// 	return &counter, nil
-// }
-
-// func GetAllCounters(ctx context.Context) ([]*Counter, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-// 	defer cancel()
-
-// 	cursor, err := Client.Database(db).Collection("counters").Find(ctx, bson.M{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var counters []*Counter
-// 	if err := cursor.All(ctx, &counters); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return counters, nil
-// }
+	return &history, nil
+}
 
 // func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
 // 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

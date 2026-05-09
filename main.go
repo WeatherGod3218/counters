@@ -3,36 +3,40 @@ package main
 import (
 	"net/http"
 
-	//cshAuth "github.com/computersciencehouse/csh-auth"
 	"github.com/WeatherGod3218/counters/database"
 	"github.com/gin-gonic/gin"
+	// "os"
+	// cshAuth "github.com/computersciencehouse/csh-auth/v2"
+	// "github.com/sirupsen/logrus"
+	// "github.com/WeatherGod3218/counters/logging"
 )
 
 func main() {
+	database.Client = database.Connect()
+
+	// auth, err := cshAuth.Init(
+	// 	os.Getenv("AUTH_OIDC_ID"),
+	// 	os.Getenv("AUTH_OIDC_SECRET"),
+	// 	os.Getenv("SERVER_HOST"),
+	// 	os.Getenv("SERVER_HOST")+"/auth/login",
+	// 	os.Getenv("SERVER_HOST")+"/auth/callback",
+	// 	[]string{"profile", "email", "groups"},
+	// )
+
+	// if err != nil {
+	// 	logging.Logger.WithFields(logrus.Fields{"error": err, "module": "main", "method": "main"}).Fatal("error initializing csh-auth")
+	// }
+
 	router := gin.Default()
 
 	router.StaticFS("/static", http.Dir("static"))
 	router.LoadHTMLGlob("templates/*")
 
-	database.Client = database.Connect()
-	// csh := cshAuth.CSHAuth{}
+	// router.GET("/auth/login", auth.HandleLogin)       // This endpoint should match the path for loginURL
+	// router.GET("/auth/callback", auth.HandleCallback) // This endpoint should match the path for callbackURL
+	// router.GET("/auth/logout", auth.HandleLogout)
 
-	// csh.Init(
-	// 	os.Getenv("AUTH_OIDC_ID"),
-	// 	os.Getenv("AUTH_OIDC_SECRET"),
-	// 	os.Getenv("AUTH_JWC_SECRET"),
-	// 	os.Getenv("AUTH_STATE"),
-	// 	os.Getenv("SERVER_HOST"),
-	// 	os.Getenv("SERVER_HOST")+"/auth/callback",
-	// 	os.Getenv("SERVER_HOST")+"/auth/login",
-	// 	[]string{"profile", "email", "groups"},
-	// )
-
-	// router.GET("/auth/login", csh.AuthRequest)
-	// router.GET("/auth/callback", csh.AuthCallback)
-	// router.GET("/auth/logout", csh.AuthLogout)
-
-	//meow
+	// router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
 

@@ -38,16 +38,25 @@ func GetCreatePage(c *gin.Context) {
 }
 
 func GetCounterId(c *gin.Context) {
-	counter, err := database.GetCounterFromId(c, c.Param("id"))
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	idToUse := c.Param("id")
+
+	counter, cError := database.GetCounterFromId(c, idToUse)
+	if cError != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": cError.Error()})
+	}
+
+	history, hError := database.GetHistoryFromId(c, idToUse)
+	if hError != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": hError.Error()})
 	}
 
 	c.HTML(200, "counter.tmpl", gin.H{
 		"Id":          counter.Id.Hex(),
 		"Title":       counter.Title,
 		"Description": counter.Description,
+		"Timestamp":   counter.LastReset.Timestamp,
+		"History":     history,
 	})
 }
 
