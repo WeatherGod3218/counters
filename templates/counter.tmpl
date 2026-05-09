@@ -14,13 +14,30 @@
           <ul class="list-group list-unstyled text-wrap text-break">
               {{ range $i, $reset := .History }}
                   <li class = "p-4">
-                      <a class="text-center list-group-item p-3">
-                          <span class="fs-5">{{ $reset.Description }}</span>
-                          <br/>
-                          <span class="days-since fw-bold display-1" data-timestamp="{{ $reset.Timestamp }}"> </span>
-                          <br/>
-                          <span class="description"><i>reported by: {{ $reset.Reporter }} caused by {{ $reset.Instigator }})</i></span>
-                      </a>
+                      <div class="list-group-item p-3">
+                        <div class="container">
+                          <div class="row">
+                            <div class="col-12">
+                              <h3 class="text-center my-2 fs-3">{{ $reset.Description }}</h3>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col">
+                              <div class="p-2">
+                                <span class="fs-5">{{ $reset.Description }}</span>
+                                <br/>
+                                <span class="days-since fw-bold display-1" data-timestamp="{{ $reset.Timestamp }}"> </span>
+                                <br/>
+                                <span class="description"><i>reported by: {{ $reset.Reporter }} caused by {{ $reset.Instigator }})</i></span>
+                              </div>
+                            </div>
+                            <div class="col">
+                              <div class="p-2 border bg-light">Box 2</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                   </li>
               {{ end }}
           </ul>
@@ -29,14 +46,13 @@
   </body>
   <script>
     (() => {
-      'use strict'
+		'use strict'
 
-      const el = document.querySelector(".days-since");
-      if (el) {
-        const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);
-        el.textContent = days;
-      }
-    })()
+		document.querySelectorAll(".days-since").forEach(el => {
+			const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);
+			el.textContent = days;
+		});
+    })();
   </script>
 </html>
 {{ end }}

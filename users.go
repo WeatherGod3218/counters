@@ -1,0 +1,223 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/WeatherGod3218/counters/logging"
+	cshAuth "github.com/computersciencehouse/csh-auth/v2"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+)
+
+type OIDCClient struct {
+	oidcClientId     string
+	oidcClientSecret string
+
+	accessToken  string
+	providerBase string
+	quit         chan struct{}
+}
+
+type OIDCUser struct {
+	Uuid     string `json:"id"`
+	Username string `json:"username"`
+	Gatekeep bool   `json:"result"`
+	SlackUID string `json:"slackuid"`
+}
+
+var groupCache map[string]string
+
+func (client *OIDCClient) setupOidcClient(oidcClientId, oidcClientSecret string) {
+	client.oidcClientId = oidcClientId
+	client.oidcClientSecret = oidcClientSecret
+	parse, err := url.Parse(cshAuth.ProviderURI)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "setupOidcClient"}).Error(err)
+		return
+	}
+	groupCache = make(map[string]string)
+	client.providerBase = parse.Scheme + "://" + parse.Host
+	exp := client.getAccessToken()
+	ticker := time.NewTicker(time.Duration(exp) * time.Second)
+	// this will async get the token
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				exp = client.getAccessToken()
+				ticker.Reset(time.Duration(exp) * time.Second)
+			case <-client.quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func (client *OIDCClient) getAccessToken() int {
+	htclient := http.DefaultClient
+	//request body
+	authData := url.Values{}
+	authData.Set("client_id", client.oidcClientId)
+	authData.Set("client_secret", client.oidcClientSecret)
+	authData.Set("grant_type", "client_credentials")
+	resp, err := htclient.PostForm(cshAuth.ProviderURI+"/protocol/openid-connect/token", authData)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "getAccessToken"}).Error(err)
+		return 0
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		logging.Logger.WithFields(logrus.Fields{"method": "getAccessToken", "statusCode": resp.StatusCode}).Error(resp.Status)
+		return 0
+	}
+	respData := make(map[string]interface{})
+	err = json.NewDecoder(resp.Body).Decode(&respData)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "getAccessToken"}).Error(err)
+		return 0
+	}
+	if respData["error"] != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "getAccessToken"}).Error(respData)
+		return 0
+	}
+	client.accessToken = respData["access_token"].(string)
+	return int(respData["expires_in"].(float64))
+}
+
+func (client *OIDCClient) GetActiveUsers() []OIDCUser {
+	return client.GetOIDCGroup("a97a191e-5668-43f5-bc0c-6eefc2b958a7")
+}
+
+func (client *OIDCClient) GetEBoard() []OIDCUser {
+	return client.GetOIDCGroup("47dd1a94-853c-426d-b181-6d0714074892")
+}
+
+func (client *OIDCClient) FindOIDCGroupID(name string) string {
+	if groupCache[name] != "" {
+		return groupCache[name]
+	}
+	htclient := &http.Client{}
+	//active
+	req, err := http.NewRequest("GET", client.providerBase+"/auth/admin/realms/csh/groups?exact=true&search="+name, nil)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "FindOIDCGroupID"}).Error(err)
+		return ""
+	}
+	req.Header.Add("Authorization", "Bearer "+client.accessToken)
+	resp, err := htclient.Do(req)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "FindOIDCGroupID"}).Error(err)
+		return ""
+	}
+	defer resp.Body.Close()
+	ret := make([]map[string]any, 0)
+	err = json.NewDecoder(resp.Body).Decode(&ret)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "FindOIDCGroupID"}).Error(err)
+		return ""
+	}
+	//Example:
+	//[{"id":"47dd1a94-853c-426d-b181-6d0714074892","name":"eboard","path":"/eboard","subGroups":[{"id":"66b9578a-2b58-46a6-8040-59388e57e830","name":"eboard-opcomm","path":"/eboard/eboard-opcomm","subGroups":[]}]}]
+	//it returns as an array for SOME reason, so we cut to the group we want
+	group := ret[0]
+	// and now we have SUBgroups, so we do this fucked parse
+	subGroups := group["subGroups"].([]any)
+	fmt.Println(subGroups)
+	subGroup := subGroups[0].(map[string]interface{})
+	fmt.Println(subGroup)
+	gid := subGroup["id"].(string)
+	groupCache[name] = gid
+	return gid
+
+}
+
+func (client *OIDCClient) GetOIDCGroup(groupID string) []OIDCUser {
+	htclient := &http.Client{}
+	//active
+	req, err := http.NewRequest("GET", client.providerBase+"/auth/admin/realms/csh/groups/"+groupID+"/members", nil)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetOIDCGroup"}).Error(err)
+		return nil
+	}
+	req.Header.Add("Authorization", "Bearer "+client.accessToken)
+	resp, err := htclient.Do(req)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetOIDCGroup"}).Error(err)
+		return nil
+	}
+	defer resp.Body.Close()
+	ret := make([]OIDCUser, 0)
+	err = json.NewDecoder(resp.Body).Decode(&ret)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetOIDCGroup"}).Error(err)
+		return nil
+	}
+	return ret
+}
+
+func (client *OIDCClient) GetUserInfo(user *OIDCUser) {
+	htclient := &http.Client{}
+	arg := ""
+	if len(user.Uuid) == 0 {
+		arg = "?username=" + user.Username
+	}
+	req, err := http.NewRequest("GET", client.providerBase+"/auth/admin/realms/csh/users/"+user.Uuid+arg, nil)
+	// also "users/{user-id}/groups"
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetUserInfo"}).Error(err)
+		return
+	}
+	req.Header.Add("Authorization", "Bearer "+client.accessToken)
+	resp, err := htclient.Do(req)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetUserInfo"}).Error(err)
+		return
+	}
+	defer resp.Body.Close()
+	b, _ := io.ReadAll(resp.Body)
+	if strings.Contains(string(b), "error") {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetUserInfo"}).Error(string(b))
+		return
+	}
+	if len(arg) > 0 {
+		userData := make([]map[string]any, 0)
+		err = json.Unmarshal(b, &userData)
+		// userdata attributes are a KV pair of string:[]any, this casts attributes, finds the specific attribute, casts it to a list of any, and then pulls the first field since there will only ever be one
+		userAttributes := userData[0]["attributes"].(map[string]any)
+		if slackIDRaw, exists := userAttributes["slackuid"]; exists {
+			user.SlackUID = slackIDRaw.([]any)[0].(string)
+		} else {
+			logging.Logger.WithFields(logrus.Fields{"method": "GetUserInfo"}).Error("User " + user.Username + " does not have a SlackUID. Skipping messaging.")
+		}
+	} else {
+		err = json.Unmarshal(b, &user)
+	}
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"method": "GetUserInfo"}).Error(err)
+	}
+}
+
+// GetUserData Retreives information about a specific CSH user account
+func GetUserData(c *gin.Context) cshAuth.UserInfo {
+	cl, _ := c.Get("cshauth")
+	user := cl.(cshAuth.Claims).UserInfo
+	return user
+}
+
+// IsEboard determines if the current user is on eboard, allowing for a dev mode override
+func IsEboard(user cshAuth.UserInfo) bool {
+	return DEV_FORCE_IS_EBOARD || slices.Contains(user.Groups, "eboard")
+}
+
+// IsActiveRTP Determines whether the user is an active RTP, based on user groups from OIDC
+func IsActiveRTP(user cshAuth.UserInfo) bool {
+	return slices.Contains(user.Groups, "active-rtp")
+}
