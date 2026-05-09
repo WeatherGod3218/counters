@@ -16,17 +16,6 @@ type History struct {
 	History []Reset       `bson:"history"`
 }
 
-func CreateHistory(ctx context.Context, history *History) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	_, err := Client.Database(db).Collection("history").InsertOne(ctx, history)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func GetHistoryFromId(ctx context.Context, id string) (*History, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -19,11 +20,34 @@ func CreateCounter(ctx context.Context, counter *Counter) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	_, err := Client.Database(db).Collection("counters").InsertOne(ctx, counter)
+	newHistory := []Reset{counter.LastReset}
+
+	history := History{
+		Id:      counter.Id,
+		History: newHistory,
+	}
+
+	session, err := Client.StartSession()
 	if err != nil {
 		return err
 	}
-	return nil
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
+		_, err := Client.Database(db).Collection("counters").InsertOne(sessCtx, counter)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = Client.Database(db).Collection("history").InsertOne(sessCtx, history)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	return err
 }
 
 func GetCounterFromId(ctx context.Context, id string) (*Counter, error) {
@@ -61,37 +85,77 @@ func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	objId := counter.Id
+	session, err := Client.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(context.Background())
 
-	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId},
-		bson.M{
-			"$set":  bson.M{"lastReset": reset},
-			"$push": bson.M{"history": reset},
+	_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
+
+		var history History
+
+		err := Client.Database(db).Collection("history").FindOne(sessCtx, bson.M{"_id": counter.Id}).Decode(&history)
+		if err != nil {
+			return nil, err
+		}
+
+		resetHistory := history.History
+		resetHistory = append(resetHistory, *reset)
+		sort.Slice(resetHistory, func(i, j int) bool {
+			return resetHistory[i].Timestamp.After(resetHistory[j].Timestamp)
 		})
-	if err != nil {
-		return err
-	}
 
-	return nil
-}
+		lastReset := resetHistory[0]
 
-func (counter *Counter) Close(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+		_, err = Client.Database(db).Collection("counters").UpdateOne(
+			sessCtx,
+			bson.M{"_id": counter.Id},
+			bson.M{"$set": bson.M{"lastReset": lastReset}},
+		)
+		if err != nil {
+			return nil, err
+		}
 
-	objId := counter.Id
+		_, err = Client.Database(db).Collection("history").UpdateOne(
+			sessCtx,
+			bson.M{"_id": counter.Id},
+			bson.M{"$push": bson.M{
+				"history": bson.M{
+					"$each": bson.A{reset},
+					"$sort": bson.M{"timestamp": -1},
+				},
+			}},
+		)
+		if err != nil {
+			return nil, err
+		}
 
-	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"open": false}})
-	if err != nil {
-		return err
-	}
+		counter.LastReset = lastReset
 
-	return nil
+		return nil, nil
+	})
+
+	return err
 }
 
 func (c *Counter) IDHex() string {
 	return c.Id.Hex()
 }
+
+// func (counter *Counter) Close(ctx context.Context) error {
+// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+// 	defer cancel()
+
+// 	objId := counter.Id
+
+// 	_, err := Client.Database(db).Collection("counters").UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": bson.M{"open": false}})
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 // func GetActiveCounters(ctx context.Context) ([]*Counter, error) {
 // 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

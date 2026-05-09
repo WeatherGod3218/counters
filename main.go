@@ -39,11 +39,13 @@ func main() {
 	// router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
+	router.GET("counters/:id", GetCounterId)
 
 	router.GET("/create", GetCreatePage)
 	router.POST("/create", CreateCounter)
 
-	router.GET("counters/:id", GetCounterId)
+	router.GET("reset/:id", GetResetPage)
+	router.POST("reset/:id", ResetCounter)
 
 	router.Run(":8080")
 }

@@ -1,0 +1,66 @@
+    {{ define "reset.tmpl"}}
+    {{ template "header.tmpl" . }}
+
+    <div class="container main p-5">
+      <h2 class="mb-4">Create Counter</h2>
+      <form action="/reset/{{.Id}}" method="POST">
+        <div class="input-group needs-validation">
+          <label for="reset-user" class="input-group-text required-label">Instigator</label>
+          <input
+            type="text"
+            class="form-control"
+            name="reset-user"
+            placeholder="Who caused it"
+            required
+          >
+        </div>
+        <div class="input-group needs-validation my-3">
+          <label for="reset-description" class="input-group-text required-label">Event</label>
+          <input
+            type="text"
+            class="form-control"
+            name="reset-description"
+            placeholder="What happened"
+            required
+          >
+        </div>
+        <div class="input-group my-3">
+          <label for="reset-time" class="input-group-text">Time</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              name="reset-time"
+            />
+          </div>
+        <input type="submit" class="btn btn-primary my-2" value="Create">
+      </form>
+    </div>
+    <style>
+      .required-label::after {
+        content: " *";
+        color: red;
+      }
+    </style>
+    <script>
+      (() => {
+        'use strict'
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation')
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach(form => {
+          form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+
+            form.classList.add('was-validated')
+          }, false)
+        })
+      })()
+    </script>
+  </body>
+</html>
+
+{{end}}

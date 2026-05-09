@@ -6,9 +6,25 @@
       <h6 class="text-center text-break"><i>{{.Description}}</i></h6>
       <h1 class="text-center days-since display-1 fw-bold" data-timestamp="{{ .Timestamp }}"> </h2>
 
-      <form action="/reset" method="POST" class="w-50 mx-auto">
+      <form action="/reset/{{.Id}}" method="GET" class="w-50 mx-auto">
         <input type="submit" class="btn btn-primary my-2 mx-auto" value="Reset">
       </form>
+      <br/>
+      <div>
+          <ul class="list-group list-unstyled text-wrap text-break">
+              {{ range $i, $reset := .History }}
+                  <li class = "p-4">
+                      <a class="text-center list-group-item p-3">
+                          <span class="fs-5">{{ $reset.Description }}</span>
+                          <br/>
+                          <span class="days-since fw-bold display-1" data-timestamp="{{ $reset.Timestamp }}"> </span>
+                          <br/>
+                          <span class="description"><i>reported by: {{ $reset.Reporter }} caused by {{ $reset.Instigator }})</i></span>
+                      </a>
+                  </li>
+              {{ end }}
+          </ul>
+      </div>
     </div>
   </body>
   <script>
