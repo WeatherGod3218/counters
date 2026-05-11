@@ -1,6 +1,48 @@
     {{ define "counter.tmpl"}}
     {{ template "header.tmpl" . }}
 
+    <div class="modal" id="deleteReset">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Delete Reset?</h5>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this reset? You can always create a Reset with identical traits later.</p>
+          </div>
+          <div class="modal-footer">
+            <form action="/delete/reset" method="POST">
+                <input type="hidden" id="reset-modal-reset-id" name="resetId" value="">
+                <input type="hidden" id="reset-modal-counter-id" name="counterId" value="">
+
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>            
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="deleteCounter">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Delete Counter?</h5>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this reset? This action is <strong>permanent.</strong> Are you sure you want to proceed with this?</p>
+          </div>
+          <div class="modal-footer">
+            <form action="/delete/counter" method="POST">
+                <input type="hidden" id="counter-modal-counter-id" name="counterId" value="">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>            
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="container main p-3">
       <h2 class="text-center text-break display-4">Days Since {{.Title}}</h2>
       <h6 class="text-center text-break"><i>{{.Description}}</i></h6>
@@ -8,37 +50,65 @@
 
       <form action="/reset/{{.Id}}" method="GET" class="w-50 mx-auto">
         <input type="submit" class="btn btn-primary my-2 mx-auto" value="Reset">
+     
+        {{if or .Eboard .RTP (eq .UserID .CounterID)}}
+          <button type="button" data-bs-toggle="modal" data-counter-id="{{ $.Id }}" data-bs-target="#deleteCounter" class="btn btn-danger ms-4">DELETE</button>
+        {{end}} 
       </form>
       <br/>
       <div>
           <ul class="list-group list-unstyled text-wrap text-break w-75 mx-auto">
               {{ range $i, $reset := .History }}
-                  <li class = "p-2">
+                {{if or $.Eboard $.RTP (eq $.UserID $reset.UserID)}}
+                  <li class="p-2">
                       <div class="list-group-item p-2">
                         <div class="container">
-                          {{/* <div class="row">
-                            <div class="col-12">
-                              <h3 class="text-center my-2 fs-3">{{ $reset.Description }}</h3>
-                            </div>
-                          </div> */}}
-                          <div class="row">
+                          <div class="row border-bottom mb-2 pb-2">
                             <div class="col d-flex flex-column justify-content-center">
-                            	<div class="text-center my-auto">
-									<span class="fs-5">{{ $reset.Description }}</span>
-									<br/>
-									<span class="description"><i>reported by: {{ $reset.Reporter }}</i></span>
-                            	</div>
+                              <div class="text-center my-auto">
+                                <span class="fs-5">{{ $reset.Description }}</span>
+                                <br/>
+                                <span class="description"><i>reported by: {{ $reset.Reporter }}</i></span>
+                              </div>
                             </div>
                             <div class="col">
-                            	<div class="text-center my-auto">
-									<span class="days-since fw-bold display-3" data-timestamp="{{ $reset.Timestamp }}"> </span>
-									<span class="description d-block">Day(s) Ago</span>
-                            	</div>
+                              <div class="text-center my-auto">
+                                <span class="days-since fw-bold display-3" data-timestamp="{{ $reset.Timestamp }}"> </span>
+                                <span class="description d-block">Day(s) Ago</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12">
+                            <button type="button" data-bs-toggle="modal" data-reset-id="{{ $reset.IDHex }}" data-counter-id="{{ $.Id }}" data-bs-target="#deleteReset" class="btn btn-danger">DELETE</button>
+                          </div>
+                        </div>
+                      </div>
+                  </li>
+                {{else}}
+                    <li class="p-2">
+                      <div class="list-group-item p-2">
+                        <div class="container">
+                          <div class="row border-bottom mb-2 pb-2">
+                            <div class="col d-flex flex-column justify-content-center">
+                              <div class="text-center my-auto">
+                                <span class="fs-5">{{ $reset.Description }}</span>
+                                <br/>
+                                <span class="description"><i>reported by: {{ $reset.Reporter }}</i></span>
+                              </div>
+                            </div>
+                            <div class="col">
+                              <div class="text-center my-auto">
+                                <span class="days-since fw-bold display-3" data-timestamp="{{ $reset.Timestamp }}"> </span>
+                                <span class="description d-block">Day(s) Ago</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                   </li>
+                {{end}}
               {{ end }}
           </ul>
       </div>
@@ -47,6 +117,17 @@
   <script>
     (() => {
 		'use strict'
+
+    document.getElementById("deleteReset").addEventListener("show.bs.modal", function(event) {
+        let button = event.relatedTarget
+        document.getElementById("reset-modal-reset-id").value = button.getAttribute("data-reset-id")
+        document.getElementById("reset-modal-counter-id").value = button.getAttribute("data-counter-id")
+    })
+
+    document.getElementById("deleteCounter").addEventListener("show.bs.modal", function(event) {
+        let button = event.relatedTarget
+        document.getElementById("counter-modal-counter-id").value = button.getAttribute("data-counter-id")
+    })
 
 		document.querySelectorAll(".days-since").forEach(el => {
 			const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);

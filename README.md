@@ -3,7 +3,7 @@
 
 A simple interface for logging and displaying time since a certain event has occured, allowing for CSHer's to track how long its been since a prior event. Heavily inspired off the "Days since last..." meme format.
 
-This project uses Golang, [Gin](https://fastapi.tiangolo.com/), HTML/CSS, and Javascript.
+This project uses Golang, [Gin](https://gin-gonic.com/en/), HTML/CSS, and Javascript.
 
 This project ALSO uses a modified version of bootstrap 5! Check it out [here!](https://github.com/ComputerScienceHouse/csh-material-bootstrap/tree/bootstrap-5)
 

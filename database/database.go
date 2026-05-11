@@ -1,3 +1,4 @@
+// Package database contains modules for each struct in the database
 package database
 
 import (
@@ -13,18 +14,10 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-type UpsertResult int
-
-const (
-	New     UpsertResult = 0
-	Updated UpsertResult = 1
-)
-
 var Client *mongo.Client
 var db = ""
 
-var logger *logrus.Logger = logrus.New()
-
+// Connects to the MongoDB database
 func Connect() *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -46,6 +39,7 @@ func Connect() *mongo.Client {
 	return client
 }
 
+// Disconnects from the MongoDB database
 func Disconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
