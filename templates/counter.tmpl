@@ -11,7 +11,7 @@
             <p>Are you sure you want to delete this reset? You can always create a Reset with identical traits later.</p>
           </div>
           <div class="modal-footer">
-            <form action="/delete/reset" method="POST">
+            <form action="/delete/reset" method="DELETE">
                 <input type="hidden" id="reset-modal-reset-id" name="resetId" value="">
                 <input type="hidden" id="reset-modal-counter-id" name="counterId" value="">
 
@@ -33,7 +33,7 @@
             <p>Are you sure you want to delete this reset? This action is <strong>permanent.</strong> Are you sure you want to proceed with this?</p>
           </div>
           <div class="modal-footer">
-            <form action="/delete/counter" method="POST">
+            <form action="/delete/counter" method="DELETE">
                 <input type="hidden" id="counter-modal-counter-id" name="counterId" value="">
                 <button type="submit" class="btn btn-danger">Delete</button>
             </form>            

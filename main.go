@@ -53,8 +53,8 @@ func main() {
 	router.GET("/reset/:id", GetResetPage)
 	router.POST("/reset/:id", ResetCounter)
 
-	router.POST("/delete/counter", DeleteCounter)
-	router.POST("/delete/reset", DeleteReset)
+	router.DELETE("/delete/counter", DeleteCounter)
+	router.DELETE("/delete/reset", DeleteReset)
 
 	router.Run(":8080")
 }
