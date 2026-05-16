@@ -207,7 +207,7 @@ func (client *OIDCClient) GetUserInfo(user *OIDCUser) {
 
 // GetUserData Retreives information about a specific CSH user account
 func GetUserData(c *gin.Context) cshAuth.UserInfo {
-	cl, _ := c.Get("cshauth")
+	cl, exists := c.Get("cshauth")
 	user := cl.(*cshAuth.Claims).UserInfo
 	return user
 }
