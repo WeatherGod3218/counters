@@ -7,17 +7,18 @@ This project uses Golang, [Gin](https://gin-gonic.com/en/), HTML/CSS, and Javasc
 
 This project ALSO uses a modified version of bootstrap 5! Check it out [here!](https://github.com/ComputerScienceHouse/csh-material-bootstrap/tree/bootstrap-5)
 
-## Installing
+## Local Development
+### Installing
 1. Clone and cd into the repo: git clone https://github.com/WeatherGod3218/counters
 >> (OPTIONAL): Make another branch if your working on a large thing!
 
-## Setup
+### Setup
 1. Make sure you have docker installed
 >> (OPTIONAL): You can use docker compose as well!!
 2. Copy the .env.template file, rename it to .env and place it in the root folder
 3. Ask an RTP for counters secrets, add them to the .env accordingly
 
-## Run
+### Run
 
 Counters is containerized through a docker file.
 
@@ -30,7 +31,7 @@ Counters is containerized through a docker file.
     docker run -p 8080:80 Counters
 ```
 
-## Docker Compose
+### Docker Compose
 
 Counters also has support for Docker Compose, a extended version of docker that simplifies the steps.
 

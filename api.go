@@ -78,15 +78,15 @@ func LoadCounter(c *gin.Context) {
 	idToUse := c.Param("id")
 	user := GetUserData(c)
 
-	counter, cError := database.GetCounterFromId(c, idToUse)
-	if cError != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": cError.Error()})
+	counter, err := database.GetCounterFromId(c, idToUse)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	history, hError := database.GetHistoryFromId(c, idToUse)
-	if hError != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": hError.Error()})
+	history, err := database.GetHistoryFromId(c, idToUse)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
