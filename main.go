@@ -17,32 +17,6 @@ var DEV_FORCE_IS_EBOARD bool = os.Getenv("DEV_FORCE_IS_EBOARD") == "true"
 
 var oidcClient = OIDCClient{}
 
-func RequireAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		value, exists := c.Get("claims")
-
-		if !exists {
-			c.JSON(401, gin.H{
-				"error": "unauthorized",
-			})
-			return
-		}
-
-		claims, ok := value.(*cshAuth.Claims)
-
-		if !ok || claims == nil {
-			c.JSON(401, gin.H{
-				"error": "unauthorized",
-			})
-			return
-		}
-
-		c.Set("authClaims", claims)
-
-		c.Next()
-	}
-}
-
 func main() {
 	database.Client = database.Connect()
 
@@ -69,8 +43,7 @@ func main() {
 	router.GET("/auth/callback", auth.HandleCallback) // This endpoint should match the path for callbackURL
 	router.GET("/auth/logout", auth.HandleLogout)
 
-	router.Use(auth.CookieMiddleware())
-	router.Use(RequireAuth())
+	router.Use(auth.HeaderMiddleware())
 
 	router.GET("/", GetHomePage)
 	router.GET("/counters/:id", LoadCounter)
