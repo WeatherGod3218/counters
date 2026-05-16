@@ -2,14 +2,18 @@ package database
 
 import (
 	"context"
-	"sort"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
+	"github.com/WeatherGod3218/counters/logging"
+	"github.com/sirupsen/logrus"
 )
 
 type Counter struct {
 	Id          bson.ObjectID `bson:"_id,omitempty"`
+	UserID      string        `bson:"uuid"`
 	CreatedBy   string        `bson:"createdBy"`
 	Title       string        `bson:"title"`
 	Description string        `bson:"description"`
@@ -81,7 +85,19 @@ func GetAllCounters(ctx context.Context) ([]*Counter, error) {
 	return counters, nil
 }
 
-func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
+func DeleteCounter(ctx context.Context, counterId bson.ObjectID) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	counter, err := GetCounterFromId(context.Background(), counterId.Hex())
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "reset", "method": "DeleteReset"}).Fatal("error deleting the counter!")
+	}
+
+	return counter.Delete(ctx)
+}
+
+func (counter *Counter) Delete(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -92,22 +108,66 @@ func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
 	defer session.EndSession(context.Background())
 
 	_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
+		_, err = Client.Database(db).Collection("history").DeleteOne(
+			sessCtx,
+			bson.M{"_id": counter.Id},
+		)
 
-		var history History
-
-		err := Client.Database(db).Collection("history").FindOne(sessCtx, bson.M{"_id": counter.Id}).Decode(&history)
 		if err != nil {
 			return nil, err
 		}
 
-		resetHistory := history.History
-		resetHistory = append(resetHistory, *reset)
-		sort.Slice(resetHistory, func(i, j int) bool {
-			return resetHistory[i].Timestamp.After(resetHistory[j].Timestamp)
-		})
+		_, err = Client.Database(db).Collection("counters").DeleteOne(
+			sessCtx,
+			bson.M{"_id": counter.Id},
+		)
 
-		lastReset := resetHistory[0]
+		if err != nil {
+			return nil, err
+		}
 
+		return nil, nil
+	})
+
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "counter", "method": "Delete", "counter": counter.Id}).Warn("error deleting the counter!")
+		return err
+	}
+
+	return nil
+}
+
+func (counter *Counter) Update(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	session, err := Client.StartSession()
+	if err != nil {
+		return false, err
+	}
+	defer session.EndSession(context.Background())
+
+	counterEmpty := false
+
+	_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
+		var history History
+
+		err = Client.Database(db).Collection("history").FindOne(
+			sessCtx,
+			bson.M{"_id": counter.Id},
+			options.FindOne().SetProjection(bson.M{"history": bson.M{"$slice": 1}}),
+		).Decode(&history)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(history.History) == 0 {
+			counterEmpty = true
+			return nil, nil
+		}
+
+		lastReset := history.History[0]
 		_, err = Client.Database(db).Collection("counters").UpdateOne(
 			sessCtx,
 			bson.M{"_id": counter.Id},
@@ -117,6 +177,33 @@ func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
 			return nil, err
 		}
 
+		counter.LastReset = lastReset
+		return nil, nil
+	})
+
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "counter", "method": "Update", "counter": counter.Id}).Warn("error updating the counter!")
+		return false, err
+	}
+
+	if counterEmpty {
+		return false, counter.Delete(context.Background())
+	}
+
+	return true, nil
+}
+
+func (counter *Counter) Reset(ctx context.Context, reset *Reset) (any, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	session, err := Client.StartSession()
+	if err != nil {
+		return true, err
+	}
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
 		_, err = Client.Database(db).Collection("history").UpdateOne(
 			sessCtx,
 			bson.M{"_id": counter.Id},
@@ -131,12 +218,14 @@ func (counter *Counter) Reset(ctx context.Context, reset *Reset) error {
 			return nil, err
 		}
 
-		counter.LastReset = lastReset
-
 		return nil, nil
 	})
 
-	return err
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "counter", "method": "Reset", "counter": counter.Id}).Fatal("error updating counters history!")
+	}
+
+	return counter.Update(context.Background())
 }
 
 func (c *Counter) IDHex() string {

@@ -11,8 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-const tempName string = "A Person!"
-
 func translateTime(inputTime string) time.Time {
 	timeZone, _ := time.LoadLocation("America/New_York")
 
@@ -26,13 +24,11 @@ func translateTime(inputTime string) time.Time {
 	if timeConverted.After(currentTime) {
 		timeConverted = currentTime
 	}
-
 	return timeConverted
 }
 
 func GetHomePage(c *gin.Context) {
-	// This is intentionally left unprotected
-	// A user may be unable to vote but should still be able to see a list of polls
+	user := GetUserData(c)
 
 	counters, err := database.GetAllCounters(c)
 
@@ -47,51 +43,76 @@ func GetHomePage(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"Counters": counters,
+		"Username": user.Username,
+		"FullName": user.FullName,
+		"EBoard":   IsEboard(user),
+		"RTP":      IsActiveRTP(user),
 	})
 }
 
 func GetCreatePage(c *gin.Context) {
-	c.HTML(http.StatusOK, "create.tmpl", gin.H{})
+	user := GetUserData(c)
+
+	c.HTML(http.StatusOK, "create.tmpl", gin.H{
+		"Username": user.Username,
+		"FullName": user.FullName,
+		"EBoard":   IsEboard(user),
+		"RTP":      IsActiveRTP(user),
+	})
 }
 
 func GetResetPage(c *gin.Context) {
+	user := GetUserData(c)
+
 	idToUse := c.Param("id")
 	c.HTML(http.StatusOK, "reset.tmpl", gin.H{
-		"Id": idToUse,
+		"Id":       idToUse,
+		"Username": user.Username,
+		"FullName": user.FullName,
+		"EBoard":   IsEboard(user),
+		"RTP":      IsActiveRTP(user),
 	})
 }
 
 func LoadCounter(c *gin.Context) {
 	idToUse := c.Param("id")
+	user := GetUserData(c)
 
-	counter, cError := database.GetCounterFromId(c, idToUse)
-	if cError != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": cError.Error()})
+	counter, err := database.GetCounterFromId(c, idToUse)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	history, hError := database.GetHistoryFromId(c, idToUse)
-	if hError != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": hError.Error()})
+	history, err := database.GetHistoryFromId(c, idToUse)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.HTML(200, "counter.tmpl", gin.H{
 		"Id":          counter.Id.Hex(),
+		"CounterID":   counter.UserID,
 		"Title":       counter.Title,
 		"Description": counter.Description,
 		"Timestamp":   counter.LastReset.Timestamp,
 		"History":     history.History,
+		"Username":    user.Username,
+		"FullName":    user.FullName,
+		"UserID":      user.Uuid,
+		"EBoard":      IsEboard(user),
+		"RTP":         IsActiveRTP(user),
 	})
 }
 
 func ResetCounter(c *gin.Context) {
 	resetTime := translateTime(c.PostForm("reset-time"))
+	user := GetUserData(c)
 
 	reset := &database.Reset{
 		Id:          bson.NewObjectID(),
-		Reporter:    tempName,
-		Instigator:  c.PostForm("reset-user"),
+		UserID:      user.Uuid,
+		Reporter:    user.Username,
 		Description: c.PostForm("reset-description"),
 		Timestamp:   resetTime,
 	}
@@ -108,18 +129,20 @@ func ResetCounter(c *gin.Context) {
 
 func CreateCounter(c *gin.Context) {
 	resetTime := translateTime(c.PostForm("reset-time"))
+	user := GetUserData(c)
 
 	reset := &database.Reset{
 		Id:          bson.NewObjectID(),
-		Reporter:    tempName,
-		Instigator:  c.PostForm("reset-user"),
+		UserID:      user.Uuid,
+		Reporter:    user.Username,
 		Description: c.PostForm("reset-description"),
 		Timestamp:   resetTime,
 	}
 
 	counter := &database.Counter{
 		Id:          bson.NewObjectID(),
-		CreatedBy:   tempName,
+		UserID:      user.Uuid,
+		CreatedBy:   user.Username,
 		Title:       c.PostForm("title"),
 		Description: c.PostForm("description"),
 		LastReset:   *reset,
@@ -132,4 +155,35 @@ func CreateCounter(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, "/counters/"+counter.IDHex())
+}
+
+func DeleteReset(c *gin.Context) {
+	counterIdString := c.PostForm("counterId")
+	resetId, _ := bson.ObjectIDFromHex(c.PostForm("resetId"))
+	counterId, _ := bson.ObjectIDFromHex(counterIdString)
+
+	exists, err := database.DeleteReset(c, counterId, resetId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if exists {
+		c.Redirect(http.StatusFound, "/counters/"+counterIdString)
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/")
+}
+
+func DeleteCounter(c *gin.Context) {
+	counterId, _ := bson.ObjectIDFromHex(c.PostForm("counterId"))
+
+	err := database.DeleteCounter(c, counterId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/")
 }

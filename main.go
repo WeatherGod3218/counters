@@ -8,11 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/WeatherGod3218/counters/logging"
-	cshAuth "github.com/computersciencehouse/csh-auth/v2"
 	"github.com/sirupsen/logrus"
+
+	cshAuth "github.com/computersciencehouse/csh-auth/v2"
 )
 
 var DEV_FORCE_IS_EBOARD bool = os.Getenv("DEV_FORCE_IS_EBOARD") == "true"
+
+var oidcClient = OIDCClient{}
 
 func main() {
 	database.Client = database.Connect()
@@ -42,13 +45,16 @@ func main() {
 	router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
-	router.GET("counters/:id", LoadCounter)
+	router.GET("/counters/:id", LoadCounter)
 
 	router.GET("/create", GetCreatePage)
 	router.POST("/create", CreateCounter)
 
-	router.GET("reset/:id", GetResetPage)
-	router.POST("reset/:id", ResetCounter)
+	router.GET("/reset/:id", GetResetPage)
+	router.POST("/reset/:id", ResetCounter)
+
+	router.DELETE("/delete/counter", DeleteCounter)
+	router.DELETE("/delete/reset", DeleteReset)
 
 	router.Run(":8080")
 }

@@ -6,10 +6,10 @@
             <div class="">Days Since Last...</div>
         </h2>
         <br/>
-        <input class="form-control" type="text" placeholder= "Find Counters">
+        <input class="form-control w-75 mx-auto" type="text" placeholder= "Find Counters">
         <br/>
         <div>
-            <ul class="list-group list-unstyled text-wrap text-break w-75 mx-auto">
+            <ul class="list-group list-unstyled text-wrap text-break">
                 {{ range $i, $counter := .Counters }}
                     <li class="p-1">
                         <a class="text-center list-group-item list-group-item-action p-3" href="/counters/{{ $counter.IDHex }}">

@@ -2,18 +2,8 @@
     {{ template "header.tmpl" . }}
 
     <div class="container main p-5">
-      <h2 class="mb-4">Create Counter</h2>
+      <h2 class="mb-4">Reset Counter</h2>
       <form action="/reset/{{.Id}}" method="POST">
-        <div class="input-group needs-validation">
-          <label for="reset-user" class="input-group-text required-label">Instigator</label>
-          <input
-            type="text"
-            class="form-control"
-            name="reset-user"
-            placeholder="Who caused it"
-            required
-          >
-        </div>
         <div class="input-group needs-validation my-3">
           <label for="reset-description" class="input-group-text required-label">Event</label>
           <input
