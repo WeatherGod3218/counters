@@ -22,7 +22,7 @@ func RequireAuth() gin.HandlerFunc {
 		value, exists := c.Get("claims")
 
 		if !exists {
-			c.AbortWithStatusJSON(401, gin.H{
+			c.JSON(401, gin.H{
 				"error": "unauthorized",
 			})
 			return
@@ -31,7 +31,7 @@ func RequireAuth() gin.HandlerFunc {
 		claims, ok := value.(*cshAuth.Claims)
 
 		if !ok || claims == nil {
-			c.AbortWithStatusJSON(401, gin.H{
+			c.JSON(401, gin.H{
 				"error": "unauthorized",
 			})
 			return
