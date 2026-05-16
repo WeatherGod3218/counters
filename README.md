@@ -39,3 +39,8 @@ Counters also has support for Docker Compose, a extended version of docker that 
 ```
     docker compose up
 ```
+
+## TODO
+- [] Add API Integration
+- [] Add Logging (similar to Votes "Actions")
+- [] Time Zone support
