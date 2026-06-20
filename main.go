@@ -43,7 +43,7 @@ func main() {
 	router.GET("/auth/callback", auth.HandleCallback) // This endpoint should match the path for callbackURL
 	router.GET("/auth/logout", auth.HandleLogout)
 
-	router.Use(auth.HeaderMiddleware())
+	router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
 	router.GET("/counters/:id", LoadCounter)
