@@ -3,37 +3,31 @@ package main
 import (
 	"net/http"
 	"sort"
-	"time"
 
 	"github.com/WeatherGod3218/counters/database"
 	"github.com/gin-gonic/gin"
 
+	cshAuth "github.com/computersciencehouse/csh-auth/v2"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func translateTime(inputTime string) time.Time {
-	timeZone, _ := time.LoadLocation("America/New_York")
-
-	currentTime := time.Now()
-
-	timeConverted, err := time.ParseInLocation("2006-01-02T15:04", inputTime, timeZone)
-	if err != nil {
-		timeConverted = currentTime
-	}
-
-	if timeConverted.After(currentTime) {
-		timeConverted = currentTime
-	}
-	return timeConverted
-}
-
 func GetHomePage(c *gin.Context) {
-	user := GetUserData(c)
+	userAny, exists := c.Get("cshauth")
+
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
 
 	counters, err := database.GetAllCounters(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load counters!"})
 		return
 	}
 
@@ -51,7 +45,17 @@ func GetHomePage(c *gin.Context) {
 }
 
 func GetCreatePage(c *gin.Context) {
-	user := GetUserData(c)
+	userAny, exists := c.Get("cshauth")
+
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
 
 	c.HTML(http.StatusOK, "create.tmpl", gin.H{
 		"Username": user.Username,
@@ -62,7 +66,17 @@ func GetCreatePage(c *gin.Context) {
 }
 
 func GetResetPage(c *gin.Context) {
-	user := GetUserData(c)
+	userAny, exists := c.Get("cshauth")
+
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
 
 	idToUse := c.Param("id")
 	c.HTML(http.StatusOK, "reset.tmpl", gin.H{
@@ -75,8 +89,17 @@ func GetResetPage(c *gin.Context) {
 }
 
 func LoadCounter(c *gin.Context) {
+	userAny, exists := c.Get("cshauth")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
 	idToUse := c.Param("id")
-	user := GetUserData(c)
 
 	counter, err := database.GetCounterFromId(c, idToUse)
 	if err != nil {
@@ -106,8 +129,19 @@ func LoadCounter(c *gin.Context) {
 }
 
 func ResetCounter(c *gin.Context) {
-	resetTime := translateTime(c.PostForm("reset-time"))
-	user := GetUserData(c)
+	userAny, exists := c.Get("cshauth")
+
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+
+	resetTime := TranslateTime(c.PostForm("reset-time"))
 
 	reset := &database.Reset{
 		Id:          bson.NewObjectID(),
@@ -128,8 +162,19 @@ func ResetCounter(c *gin.Context) {
 }
 
 func CreateCounter(c *gin.Context) {
-	resetTime := translateTime(c.PostForm("reset-time"))
-	user := GetUserData(c)
+	userAny, exists := c.Get("cshauth")
+
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+	user, ok := userAny.(*cshAuth.Claims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load CSH context!"})
+		return
+	}
+
+	resetTime := TranslateTime(c.PostForm("reset-time"))
 
 	reset := &database.Reset{
 		Id:          bson.NewObjectID(),

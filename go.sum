@@ -18,6 +18,8 @@ github.com/computersciencehouse/csh-auth/v2 v2.0.0 h1:uRP8Ti/pb1SaSSBvhk3dLVpHag
 github.com/computersciencehouse/csh-auth/v2 v2.0.0/go.mod h1:JelmcPFBLpo8wnmErF4Zoa4UJKi0psgUDpcuTq6pWbY=
 github.com/computersciencehouse/csh-auth/v2 v2.0.1 h1:rtGa9cBDZJZZJ8aeGefwAM/rzPMxWNAGDwuVDZI80ro=
 github.com/computersciencehouse/csh-auth/v2 v2.0.1/go.mod h1:uL/2UDr9GJlAQORsn+rmFc18YkBsZPymYJbwb+uTRig=
+github.com/computersciencehouse/csh-auth/v2 v2.0.2 h1:xlxv2w2cmiWriVNhwA8Io1FWI54sDmv7c12gkVAcK30=
+github.com/computersciencehouse/csh-auth/v2 v2.0.2/go.mod h1:uL/2UDr9GJlAQORsn+rmFc18YkBsZPymYJbwb+uTRig=
 github.com/coreos/go-oidc v2.5.0+incompatible h1:6W0vGJR3Tu0r0PwfmjOrRZSlfxeEln8dsejt3ZWIvwo=
 github.com/coreos/go-oidc v2.5.0+incompatible/go.mod h1:CgnwVTmzoESiwO9qyAFEMiHoZ1nMCKZlZ9V6mm3/LKc=
 github.com/coreos/go-oidc/v3 v3.18.0 h1:V9orjXynvu5wiC9SemFTWnG4F45v403aIcjWo0d41+A=

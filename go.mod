@@ -3,7 +3,7 @@ module github.com/WeatherGod3218/counters
 go 1.25.7
 
 require (
-	github.com/computersciencehouse/csh-auth/v2 v2.0.1
+	github.com/computersciencehouse/csh-auth/v2 v2.0.2
 	github.com/gin-gonic/gin v1.12.0
 	github.com/sirupsen/logrus v1.9.4
 	go.mongodb.org/mongo-driver/v2 v2.6.0
