@@ -15,20 +15,18 @@ import (
 
 var DEV_FORCE_IS_EBOARD bool = os.Getenv("DEV_FORCE_IS_EBOARD") == "true"
 
-var oidcClient = OIDCClient{}
-
 func main() {
 	database.Client = database.Connect()
 
+	hostUrl := os.Getenv("SERVER_HOST")
 	auth, err := cshAuth.Init(
 		os.Getenv("AUTH_OIDC_ID"),
 		os.Getenv("AUTH_OIDC_SECRET"),
-		os.Getenv("SERVER_HOST"),
-		os.Getenv("SERVER_HOST")+"/auth/login",
-		os.Getenv("SERVER_HOST")+"/auth/callback",
+		hostUrl,
+		hostUrl+"/auth/login",
+		hostUrl+"/auth/callback",
 		[]string{"profile", "email", "groups"},
 	)
-	oidcClient.setupOidcClient(os.Getenv("AUTH_OIDC_ID"), os.Getenv("AUTH_OIDC_SECRET"))
 
 	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "main", "method": "main"}).Fatal("error initializing csh-auth")
@@ -39,11 +37,11 @@ func main() {
 	router.StaticFS("/static", http.Dir("static"))
 	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/auth/login", auth.HandleLogin)       // This endpoint should match the path for loginURL
-	router.GET("/auth/callback", auth.HandleCallback) // This endpoint should match the path for callbackURL
+	router.GET("/auth/login", auth.HandleLogin)
+	router.GET("/auth/callback", auth.HandleCallback)
 	router.GET("/auth/logout", auth.HandleLogout)
 
-	router.Use(auth.HeaderMiddleware())
+	router.Use(auth.CookieMiddleware())
 
 	router.GET("/", GetHomePage)
 	router.GET("/counters/:id", LoadCounter)
