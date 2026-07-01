@@ -37,10 +37,11 @@ Counters also has support for Docker Compose, a extended version of docker that 
 
 (This is a really cool thing! If you use docker often, check it out!)
 ```
-    docker compose up
+    docker compose up --build
 ```
 
 ## TODO
+- [] Add Swagger
 - [] Add API Integration
 - [] Add Logging (similar to Votes "Actions")
 - [] Time Zone support
