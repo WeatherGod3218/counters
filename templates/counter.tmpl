@@ -130,7 +130,7 @@
     })
 
 		document.querySelectorAll(".days-since").forEach(el => {
-			const days = Math.floor((Date.now() - new Date(el.dataset.timestamp)) / 86400000);
+      const days = Math.floor((Date.now() - (el.dataset.timestamp*1000)) / 86400000);
 			el.textContent = days;
 		});
     })();
