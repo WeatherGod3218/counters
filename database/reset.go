@@ -14,7 +14,7 @@ type Reset struct {
 	UserID      string        `bson:"uuid"`
 	Reporter    string        `bson:"reporter"`
 	Description string        `bson:"description"`
-	Timestamp   time.Time     `bson:"timestamp"`
+	Timestamp   int64         `bson:"timestamp"`
 }
 
 func (r *Reset) IDHex() string {

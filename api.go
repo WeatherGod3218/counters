@@ -5,7 +5,9 @@ import (
 	"sort"
 
 	"github.com/WeatherGod3218/counters/database"
+	"github.com/WeatherGod3218/counters/logging"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	cshAuth "github.com/computersciencehouse/csh-auth/v2"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -27,12 +29,13 @@ func GetHomePage(c *gin.Context) {
 	counters, err := database.GetAllCounters(c)
 
 	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "api", "method": "GetHomePage"}).Warn("Unable to load counters!")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load counters!"})
 		return
 	}
 
 	sort.Slice(counters, func(i, j int) bool {
-		return counters[i].LastReset.Timestamp.After(counters[j].LastReset.Timestamp)
+		return counters[i].LastReset.Timestamp > counters[j].LastReset.Timestamp
 	})
 
 	c.HTML(http.StatusOK, "index.html", gin.H{

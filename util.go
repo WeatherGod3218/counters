@@ -39,7 +39,7 @@ func IsActiveRTP(user *cshAuth.Claims) bool {
 	return slices.Contains(user.Groups, "active-rtp")
 }
 
-func TranslateTime(inputTime string) time.Time {
+func TranslateTime(inputTime string) int64 {
 	timeZone, _ := time.LoadLocation("America/New_York")
 
 	currentTime := time.Now()
@@ -52,5 +52,6 @@ func TranslateTime(inputTime string) time.Time {
 	if timeConverted.After(currentTime) {
 		timeConverted = currentTime
 	}
-	return timeConverted
+
+	return timeConverted.Unix()
 }
