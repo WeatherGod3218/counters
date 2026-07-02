@@ -22,7 +22,6 @@ func IsEboard(user *cshAuth.Claims) bool {
 		logging.Logger.Warn("FORCED EBOARD WAS MISTYPED, MAKE SURE IT'S EITHER true OR false")
 	}
 
-	logging.Logger.Info(user.Groups)
 	return slices.Contains(user.Groups, "eboard")
 }
 
