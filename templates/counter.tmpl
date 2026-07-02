@@ -51,7 +51,7 @@
       <form action="/reset/{{.Id}}" method="GET" class="w-50 mx-auto">
         <input type="submit" class="btn btn-primary my-2 mx-auto" value="Reset">
      
-        {{if or .Eboard .RTP (eq .UserID .CounterID)}}
+        {{if or .EBoard .RTP (eq .UserID .CounterID)}}
           <button type="button" data-bs-toggle="modal" data-counter-id="{{ $.Id }}" data-bs-target="#deleteCounter" class="btn btn-danger ms-4">DELETE</button>
         {{end}} 
       </form>
@@ -59,7 +59,7 @@
       <div>
           <ul class="list-group list-unstyled text-wrap text-break w-75 mx-auto">
               {{ range $i, $reset := .History }}
-                {{if or $.Eboard $.RTP (eq $.UserID $reset.UserID)}}
+                {{if or $.EBoard $.RTP (eq $.UserID $reset.UserID)}}
                   <li class="p-2">
                       <div class="list-group-item p-2">
                         <div class="container">
