@@ -27,7 +27,7 @@ func Connect() *mongo.Client {
 
 	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "database", "method": "Connect"}).Fatal("error connecting to database, URI: " + uri + "meow")
-	}
+	}lj'qe54i\7ae5-7
 
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
 		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "database", "method": "Connect"}).Fatal("error pinging database")
