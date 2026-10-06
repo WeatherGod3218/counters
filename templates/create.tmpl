@@ -3,7 +3,7 @@
 
     <div class="container main p-5">
       <h2 class="mb-4">Create Counter</h2>
-      <form action="/create" method="POST">
+      <form action="/api/v1/counter" method="POST">
         <div class="input-group needs-validation">
           <label for="title" class="input-group-text required-label">Counter Title</label>
           <input
@@ -65,17 +65,52 @@
 
         input.value = formatted;
         
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
         const forms = document.querySelectorAll('.needs-validation')
 
-        // Loop over them and prevent submission
         Array.from(forms).forEach(form => {
           form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-              event.preventDefault()
-              event.stopPropagation()
+            event.preventDefault()
+
+            if (!form.checkValidity()) return;
+
+            const data = Object.fromEntries(new FormData(form));
+            const button = form.querySelector('[type="submit"]');
+            if (button) button.disabled = true;
+
+            const counterBody = {
+              "title": data["title"],
+              "description": data["description"]
             }
 
+            const resetBody = {
+              "counter_id": "test",
+              "description": data["reset-description"],
+              "reset_time": data["reset-time"]
+            }
+
+            try {
+              const response = await fetch('/api/v1/counter', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({
+                  "counter": counterBody,
+                  "reset": resetBody
+                }),
+              });
+
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+              const result = await response.json();
+              console.log('Success:', result);
+
+              form.reset();
+              form.classList.remove('was-validated');
+            } catch (err) {
+              console.error('Error:', err);
+            } finally {
+              if (button) button.disabled = false;
+            }
             form.classList.add('was-validated')
           }, false)
         })

@@ -1,9 +1,13 @@
-package pages
+package web
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/ComputerScienceHouse/counters/internal/routes/web/pages"
+	"github.com/gin-gonic/gin"
+)
 
 func Routes(r *gin.RouterGroup) {
-	r.GET("/")
-	r.GET("/create")
-	r.GET("/reset/:id")
+	r.GET("/", pages.GetHomePage)
+	r.GET("/create", pages.GetCreatePage)
+	r.GET("/reset/:id", pages.GetResetPage)
+	r.GET("/counter/:id", pages.GetCounterPage)
 }
