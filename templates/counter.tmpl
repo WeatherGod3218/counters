@@ -92,14 +92,14 @@
                           <div class="row border-bottom mb-2 pb-2">
                             <div class="col d-flex flex-column justify-content-center">
                               <div class="text-center my-auto">
-                                <span class="fs-5">{{ $reset.Description }}</span>
+                                <span class="fs-5">{{ $reset.ResetDescription }}</span>
                                 <br/>
-                                <span class="description"><i>reported by: {{ $reset.Reporter }}</i></span>
+                                <span class="description"><i>reported by: {{ $reset.ResetUsername }}</i></span>
                               </div>
                             </div>
                             <div class="col">
                               <div class="text-center my-auto">
-                                <span class="days-since fw-bold display-3" data-timestamp="{{ $reset.Timestamp }}"> </span>
+                                <span class="days-since fw-bold display-3" data-timestamp="{{ $reset.ResetOccuredAt }}"> </span>
                                 <span class="description d-block">Day(s) Ago</span>
                               </div>
                             </div>
