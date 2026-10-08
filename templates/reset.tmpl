@@ -58,11 +58,14 @@
             const button = form.querySelector('[type="submit"]');
             if (button) button.disabled = true;
 
+            const ms = new Date(data['reset-time']).getTime();
+            const resetTime = Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+
             const resetBody = {
               "counter_id": {{ .Id }},
               "description": data["reset-description"],
-              "reset_time": data['reset-time']
-              ? new Date(data['reset-time']).toISOString()
+              "reset_time": resetTime
+              ? resetTime
               : null,
             }
 

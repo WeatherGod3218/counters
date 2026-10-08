@@ -11,6 +11,7 @@ func GetResetPage(c *gin.Context) {
 	user, err := users.GetCSHAuth(c)
 	if err != nil {
 		c.Status(http.StatusUnauthorized)
+		return
 	}
 
 	idToUse := c.Param("id")

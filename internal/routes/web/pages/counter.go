@@ -15,6 +15,7 @@ func GetCounterPage(c *gin.Context) {
 	user, err := users.GetCSHAuth(c)
 	if err != nil {
 		c.Status(http.StatusUnauthorized)
+		return
 	}
 
 	idToUse := c.Param("id")
@@ -28,6 +29,7 @@ func GetCounterPage(c *gin.Context) {
 
 	if counter == nil {
 		c.Redirect(http.StatusNotFound, "/")
+		return
 	}
 
 	history, err := database.GetResetsFromCounterId(c.Request.Context(), idToUse)
@@ -36,6 +38,8 @@ func GetCounterPage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.NewErrorResponse())
 		return
 	}
+
+	logging.Logger.Info(counter.CounterDescription)
 
 	c.HTML(http.StatusOK, "counter.tmpl", gin.H{
 		"Id":          counter.CounterID,

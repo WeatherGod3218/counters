@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/ComputerScienceHouse/counters/internal/models"
+	"github.com/ComputerScienceHouse/counters/internal/util"
 	"github.com/jackc/pgx/v5"
 )
 
-func CreateReset(ctx context.Context, userID string, username string, resetTime int64, req *models.CreateResetInput) (string, error) {
+func CreateReset(ctx context.Context, userID string, username string, req *models.CreateResetInput) (string, error) {
 	resetID, err := GenerateUUID()
 	if err != nil {
 		return "", err
@@ -17,12 +18,12 @@ func CreateReset(ctx context.Context, userID string, username string, resetTime 
 	_, err = db.Exec(ctx, `
 		INSERT INTO resets (reset_id, counter_id, user_id, username, description, occured_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-	`, resetID, req.CounterID, userID, username, req.Description, time.Unix(resetTime, 0))
+	`, resetID, req.CounterID, userID, username, req.Description, time.Unix(util.ValidateTime(req.ResetTime), 0))
 
 	return resetID, err
 }
 
-func CreateResetWithTransaction(ctx context.Context, tx pgx.Tx, userID string, username string, resetTime int64, req *models.CreateResetInput) (string, error) {
+func CreateResetWithTransaction(ctx context.Context, tx pgx.Tx, userID string, username string, req *models.CreateResetInput) (string, error) {
 	resetID, err := GenerateUUID()
 	if err != nil {
 		return "", err
@@ -31,7 +32,7 @@ func CreateResetWithTransaction(ctx context.Context, tx pgx.Tx, userID string, u
 	_, err = tx.Exec(ctx, `
 		INSERT INTO resets (reset_id, counter_id, user_id, username, description, occured_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-	`, resetID, req.CounterID, userID, username, req.Description, time.Unix(resetTime, 0))
+	`, resetID, req.CounterID, userID, username, req.Description, time.Unix(util.ValidateTime(req.ResetTime), 0))
 
 	return resetID, err
 }

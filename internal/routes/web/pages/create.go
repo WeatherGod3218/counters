@@ -11,6 +11,7 @@ func GetCreatePage(c *gin.Context) {
 	user, err := users.GetCSHAuth(c)
 	if err != nil {
 		c.Status(http.StatusUnauthorized)
+		return
 	}
 
 	c.HTML(http.StatusOK, "create.tmpl", gin.H{

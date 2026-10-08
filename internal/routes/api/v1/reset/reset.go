@@ -7,7 +7,6 @@ import (
 	"github.com/ComputerScienceHouse/counters/internal/logging"
 	"github.com/ComputerScienceHouse/counters/internal/models"
 	"github.com/ComputerScienceHouse/counters/internal/users"
-	"github.com/ComputerScienceHouse/counters/internal/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -31,9 +30,8 @@ func CreateReset(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	patchedResetTime := util.TranslateTime(req.ResetTime)
 
-	if _, err := database.CreateReset(c.Request.Context(), user.Uuid, user.Username, patchedResetTime, &req); err != nil {
+	if _, err := database.CreateReset(c.Request.Context(), user.Uuid, user.Username, &req); err != nil {
 		logging.Logger.Warnf("failed to create error %s", err)
 		c.Status(http.StatusBadRequest)
 		return

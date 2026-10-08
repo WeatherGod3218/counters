@@ -17,13 +17,13 @@
           >
         </div>
         <div class="input-group my-3">
-          <label for="description" class="input-group-text required-label">Description</label>
+          <label for="description" class="input-group-text required-label">Tagline</label>
           <input
             type="text"
             id="description"
             name="description"
             class="form-control"
-            placeholder="Description"
+            placeholder="A little message underneath the title..."
             required
             pattern=".*\S.*"
           >
@@ -84,6 +84,9 @@
             const button = form.querySelector('[type="submit"]');
             if (button) button.disabled = true;
 
+            const ms = new Date(data['reset-time']).getTime();
+            const resetTime = Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+
             const counterBody = {
               "title": data["title"],
               "description": data["description"]
@@ -92,8 +95,8 @@
             const resetBody = {
               "counter_id": "test",
               "description": data["reset-description"],
-              "reset_time": data['reset-time']
-              ? new Date(data['reset-time']).toISOString()
+              "reset_time": resetTime
+              ? resetTime
               : null,
             }
 

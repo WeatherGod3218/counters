@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/ComputerScienceHouse/counters/internal/models"
-	"github.com/ComputerScienceHouse/counters/internal/util"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -30,9 +29,7 @@ func CreateCounterWithReset(ctx context.Context, userId string, username string,
 		return "", err
 	}
 
-	patchedResetTime := util.TranslateTime(rReq.ResetTime)
-
-	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, patchedResetTime, rReq)
+	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, rReq)
 	if err != nil {
 		return "", err
 	}
@@ -92,29 +89,33 @@ func GetCounters(ctx context.Context) ([]*models.CounterListPart, error) {
 
 func GetCounterFromId(ctx context.Context, rowId string) (*models.CounterListPart, error) {
 	var (
-		counterId        string
-		counterTitle     string
-		resetDescription string
-		resetUsername    string
-		resetOccuredAt   time.Time
+		counterId          string
+		counterOwner       string
+		counterTitle       string
+		counterDescription string
+		resetDescription   string
+		resetUsername      string
+		resetOccuredAt     time.Time
 	)
 
 	err := db.QueryRow(ctx, `
-		SELECT c.counter_id, c.title, r.description, r.username, r.occured_at FROM counters c
+		SELECT c.counter_id, c.user_id, c.title, c.description, r.description, r.username, r.occured_at FROM counters c
 		JOIN resets r ON c.last_reset = r.reset_id
 		WHERE c.counter_id = $1
-	`, rowId).Scan(&counterId, &counterTitle, &resetDescription, &resetUsername, &resetOccuredAt)
+	`, rowId).Scan(&counterId, &counterOwner, &counterTitle, &counterDescription, &resetDescription, &resetUsername, &resetOccuredAt)
 
 	if err != nil {
 		return nil, err
 	}
 
 	counter := &models.CounterListPart{
-		CounterID:        counterId,
-		CounterTitle:     counterTitle,
-		ResetDescription: resetDescription,
-		ResetUsername:    resetUsername,
-		ResetOccuredAt:   resetOccuredAt.Unix(),
+		CounterID:          counterId,
+		CounterTitle:       counterTitle,
+		CounterDescription: counterDescription,
+		CounterOwner:       counterOwner,
+		ResetDescription:   resetDescription,
+		ResetUsername:      resetUsername,
+		ResetOccuredAt:     resetOccuredAt.Unix(),
 	}
 
 	return counter, nil
