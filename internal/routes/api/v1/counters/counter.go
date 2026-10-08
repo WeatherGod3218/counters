@@ -12,32 +12,72 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DeleteCounter(c *gin.Context) {
+func GetCounter(c *gin.Context) {
 	user, err := users.GetCSHAuth(c)
 	if err != nil {
 		c.Status(http.StatusUnauthorized)
 		return
 	}
+	idToUse := c.Param("id")
+
+	counter, err := database.GetCounterFromId(c.Request.Context(), idToUse)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	resets, err := database.GetResetsFromCounterId(c.Request.Context(), idToUse)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	c.HTML(200, "counter.tmpl", gin.H{
+		"Id":          counter.CounterID,
+		"CounterID":   counter.CounterOwner,
+		"Title":       counter.CounterTitle,
+		"Description": counter.CounterDescription,
+		"Timestamp":   counter.ResetOccuredAt,
+		"History":     resets,
+		"Username":    user.Username,
+		"FullName":    user.FullName,
+		"UserID":      user.Uuid,
+		"EBoard":      users.IsEboard(user),
+		"RTP":         users.IsActiveRTP(user),
+	})
+}
+
+func DeleteCounter(c *gin.Context) {
+	user, err := users.GetCSHAuth(c)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"module": "counter", "error": err}).Warning("Error getting CSH auth last reset")
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 
 	var req models.DeleteCounterInput
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logging.Logger.WithFields(logrus.Fields{"module": "counter", "error": err}).Warning("Error casting request")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	counterOwner, err := database.GetCounterOwner(c.Request.Context(), req.RowID)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{"module": "counter", "error": err}).Warning("Error getting counter owner")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	sameUser := counterOwner == user.Uuid
 	if !users.IsEboard(user) && !users.IsActiveRTP(user) && !sameUser {
+		logging.Logger.WithFields(logrus.Fields{"module": "counter", "error": err}).Warning("Error getting user permissions")
 		c.Status(http.StatusUnauthorized)
 		return
 	}
 
 	if err := database.DeleteCounter(c.Request.Context(), req.RowID); err != nil {
+		logging.Logger.WithFields(logrus.Fields{"module": "counter", "error": err}).Warning("Error deleting counter")
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -53,7 +93,7 @@ func CreateCounter(c *gin.Context) {
 
 	var req models.CreateCounterWithResetInput
 
-	if err := c.ShouldBindBodyWith(req, binding.JSON); err != nil {
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
 		body, _ := c.Get(gin.BodyBytesKey)
 		raw, _ := body.([]byte)
 
@@ -65,13 +105,14 @@ func CreateCounter(c *gin.Context) {
 		return
 	}
 
-	if err := database.CreateCounterWithReset(c.Request.Context(), user.Uuid, user.Username, &req.Counter, &req.Reset); err != nil {
+	counterID, err := database.CreateCounterWithReset(c.Request.Context(), user.Uuid, user.Username, &req.Counter, &req.Reset)
+	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{"module": "counters", "error": err}).Warning("Error creating new database")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, counterID)
 }
 
 func Routes(r *gin.RouterGroup) {

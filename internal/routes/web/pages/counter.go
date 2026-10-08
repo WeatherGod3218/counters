@@ -42,7 +42,7 @@ func GetCounterPage(c *gin.Context) {
 		"CounterID":   counter.CounterOwner,
 		"Title":       counter.CounterTitle,
 		"Description": counter.CounterDescription,
-		"Timestamp":   counter.ResetOccuredAt.UnixMilli(),
+		"Timestamp":   counter.ResetOccuredAt,
 
 		"History":  history,
 		"Username": user.Username,

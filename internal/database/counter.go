@@ -8,41 +8,48 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func CreateCounterWithReset(ctx context.Context, userId string, username string, cReq *models.CreateCounterInput, rReq *models.CreateResetInput) error {
+func CreateCounterWithReset(ctx context.Context, userId string, username string, cReq *models.CreateCounterInput, rReq *models.CreateResetInput) (string, error) {
 	tx, err := db.Begin(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer tx.Rollback(ctx)
 
 	counterId, err := GenerateUUID()
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, rReq)
-	if err != nil {
-		return err
-	}
+	rReq.CounterID = counterId
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO counters (counter_id, user_id, username, title, description, last_reset)
 		VALUES ($1, $2, $3, $4, $5, $6)
-	`, counterId, userId, username, cReq.Title, cReq.Description, resetID)
-
+	`, counterId, userId, username, cReq.Title, cReq.Description, nil)
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, rReq)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = tx.Exec(ctx, `
+        UPDATE counters SET last_reset = $1 WHERE counter_id = $2
+    `, resetID, counterId)
+	if err != nil {
+		return "", err
 	}
 
 	tx.Commit(ctx)
-	return nil
+	return counterId, nil
 }
 
 func GetCounters(ctx context.Context) ([]*models.CounterListPart, error) {
 	rows, err := db.Query(ctx, `
-		SELECT c.counter_id, c.user_id, c.title, c.description, r.description, r.username, r.created_at FROM counters c
+		SELECT c.counter_id, c.user_id, c.title, c.description, r.description, r.username, r.occured_at FROM counters c
 		JOIN resets r ON c.last_reset = r.reset_id
-		ORDER BY r.created_at DESC
+		ORDER BY r.occured_at DESC
 	`)
 	if err != nil {
 		return nil, err
@@ -73,7 +80,7 @@ func GetCounters(ctx context.Context) ([]*models.CounterListPart, error) {
 			CounterDescription: counterDescription,
 			ResetDescription:   resetDescription,
 			ResetUsername:      resetUsername,
-			ResetOccuredAt:     resetCreatedAt,
+			ResetOccuredAt:     resetCreatedAt.Unix(),
 		})
 	}
 
@@ -91,7 +98,7 @@ func GetCounterFromId(ctx context.Context, rowId string) (*models.CounterListPar
 
 	err := db.QueryRow(ctx, `
 		SELECT c.counter_id, c.title, r.description, r.username, r.occured_at FROM counters c
-		JOIN reset r ON c.last_reset = r.reset_id
+		JOIN resets r ON c.last_reset = r.reset_id
 		WHERE c.counter_id = $1
 	`, rowId).Scan(&counterId, &counterTitle, &resetDescription, &resetUsername, &resetOccuredAt)
 
@@ -104,7 +111,7 @@ func GetCounterFromId(ctx context.Context, rowId string) (*models.CounterListPar
 		CounterTitle:     counterTitle,
 		ResetDescription: resetDescription,
 		ResetUsername:    resetUsername,
-		ResetOccuredAt:   resetOccuredAt,
+		ResetOccuredAt:   resetOccuredAt.Unix(),
 	}
 
 	return counter, nil
@@ -152,6 +159,40 @@ func InitCounters(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func UpdateCounterLastReset(ctx context.Context, counterId string) (bool, error) {
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback(ctx)
+
+	var lastReset string
+
+	if err := tx.QueryRow(ctx, `
+		SELECT r.reset_id FROM resets r
+		WHERE r.counter_id = $1
+		ORDER BY r.occured_at DESC
+		LIMIT 1
+	`, counterId).Scan(&lastReset); err != nil {
+		if err == pgx.ErrNoRows {
+			return false, DeleteCounter(ctx, counterId)
+		}
+		return false, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE counters SET last_reset = $1 WHERE counter_id = $2
+	`, lastReset, counterId); err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // im doing bullshit. I don't feel like dealing with a migration so this will do

@@ -12,12 +12,12 @@
             <ul class="list-group list-unstyled text-wrap text-break">
                 {{ range $i, $counter := .Counters }}
                     <li class="p-1">
-                        <a class="text-center list-group-item list-group-item-action p-3" href="/counters/{{ $counter.IDHex }}">
-                            <span class="fs-5">{{ $counter.Title }}</span>
+                        <a class="text-center list-group-item list-group-item-action p-3" href="/counter/{{ $counter.CounterID }}">
+                            <span class="fs-5">{{ $counter.CounterTitle }}</span>
                             <br/>
-                            <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.LastReset.Timestamp }}"> </span>
+                            <span class="days-since fw-bold display-1" data-timestamp="{{ $counter.ResetOccuredAt }}"> </span>
                             <br/>
-                            <span class="description"><i>{{ $counter.LastReset.Description }} (reported by {{ $counter.LastReset.Reporter }})</i></span>
+                            <span class="description"><i>{{ $counter.ResetDescription }} (reported by {{ $counter.ResetUsername }})</i></span>
                         </a>
                     </li>
                 {{ end }}

@@ -26,7 +26,7 @@ func GetHomePage(c *gin.Context) {
 	}
 
 	sort.Slice(counters, func(i, j int) bool {
-		return counters[i].ResetOccuredAt.Unix() > counters[j].ResetOccuredAt.Unix()
+		return counters[i].ResetOccuredAt > counters[j].ResetOccuredAt
 	})
 
 	c.HTML(http.StatusOK, "index.html", gin.H{

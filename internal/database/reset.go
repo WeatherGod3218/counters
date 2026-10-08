@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/ComputerScienceHouse/counters/internal/models"
-	"github.com/ComputerScienceHouse/counters/internal/util"
 	"github.com/jackc/pgx/v5"
 )
 
-func CreateReset(ctx context.Context, userID string, username string, req *models.CreateResetInput) (string, error) {
+func CreateReset(ctx context.Context, userID string, username string, resetTime int64, req *models.CreateResetInput) (string, error) {
 	resetID, err := GenerateUUID()
 	if err != nil {
 		return "", err
@@ -18,7 +17,7 @@ func CreateReset(ctx context.Context, userID string, username string, req *model
 	_, err = db.Exec(ctx, `
 		INSERT INTO resets (reset_id, counter_id, user_id, username, description, occured_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-	`, resetID, req.CounterID, userID, username, req.Description, util.TranslateTime(req.ResetTime))
+	`, resetID, req.CounterID, userID, username, req.Description, time.Unix(resetTime, 0))
 
 	return resetID, err
 }
@@ -45,7 +44,7 @@ func DeleteReset(ctx context.Context, counterid string, resetid string) error {
 	defer tx.Rollback(ctx)
 
 	_, err = db.Exec(ctx, `
-		DELETE FROM resets WHERE id = $1
+		DELETE FROM resets WHERE reset_id = $1
 	`, resetid)
 
 	return err
@@ -64,18 +63,20 @@ func GetResetOwner(ctx context.Context, resetID string) (string, error) {
 func GetCounterFromReset(ctx context.Context, resetID string) (string, error) {
 	var counterID string
 
-	err := db.QueryRow(ctx, `
-		SELECT counter_id FROM resets WHERE reset_id = $1
-	`, resetID).Scan(&counterID)
+	if err := db.QueryRow(ctx, `
+		SELECT r.counter_id FROM resets r WHERE r.reset_id = $1
+	`, resetID).Scan(&counterID); err != nil {
+		return "", err
+	}
 
-	return counterID, err
+	return counterID, nil
 }
 
 func GetResetsFromCounterId(ctx context.Context, counterID string) ([]*models.ResetListPart, error) {
 	rows, err := db.Query(ctx, `
-		SELECT r.reset_id, r.description, r.user_id, r.username, r.occured_at
+		SELECT r.reset_id, r.description, r.user_id, r.username, r.occured_at FROM resets r
 		WHERE r.counter_id = $1
-		ORDER BY r.occured_at
+		ORDER BY r.occured_at DESC
 	`, counterID)
 	if err != nil {
 		return nil, err
@@ -88,19 +89,21 @@ func GetResetsFromCounterId(ctx context.Context, counterID string) ([]*models.Re
 		var (
 			resetId          string
 			resetDescription string
+			resetOwner       string
 			resetUsername    string
 			resetOccuredAt   time.Time
 		)
 
-		if err := rows.Scan(&resetId, &resetDescription, &resetUsername, &resetOccuredAt); err != nil {
+		if err := rows.Scan(&resetId, &resetDescription, &resetOwner, &resetUsername, &resetOccuredAt); err != nil {
 			return nil, err
 		}
 
 		resets = append(resets, &models.ResetListPart{
 			ResetID:          resetId,
 			ResetDescription: resetDescription,
+			ResetOwner:       resetOwner,
 			ResetUsername:    resetUsername,
-			ResetOccuredAt:   resetOccuredAt,
+			ResetOccuredAt:   resetOccuredAt.Unix(),
 		})
 	}
 

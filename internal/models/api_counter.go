@@ -11,5 +11,5 @@ type CreateCounterInput struct {
 }
 
 type DeleteCounterInput struct {
-	RowID string `json:"row_id"`
+	RowID string `json:"counter_id"`
 }

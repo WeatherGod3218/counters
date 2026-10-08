@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type Reset struct {
 	ResetId     string `json:"reset_id"`
 	UserID      string `json:"user_id"`
@@ -11,8 +9,9 @@ type Reset struct {
 }
 
 type ResetListPart struct {
-	ResetID          string    `json:"reset_id"`
-	ResetDescription string    `json:"reset_description"`
-	ResetUsername    string    `json:"reset_username"`
-	ResetOccuredAt   time.Time `json:"reset_occured_at"`
+	ResetID          string `json:"reset_id"`
+	ResetDescription string `json:"reset_description"`
+	ResetOwner       string `json:"reset_owner"`
+	ResetUsername    string `json:"reset_username"`
+	ResetOccuredAt   int64  `json:"reset_occured_at"`
 }
