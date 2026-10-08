@@ -2,25 +2,15 @@ package util
 
 import (
 	"time"
+	_ "time/tzdata"
 )
 
-func TranslateTime(inputTime string) int64 {
-	timeZone, _ := time.LoadLocation("America/New_York")
+func ValidateTime(inputTime int64) int64 {
+	now := time.Now().Unix()
 
-	var finalTime int64 = 0
-	currentTime := time.Now().Unix()
-
-	timeConverted, err := time.ParseInLocation("2006-01-02T15:04", inputTime, timeZone)
-
-	finalTime = timeConverted.Unix()
-
-	if err != nil {
-		finalTime = currentTime
+	if timestamp := inputTime; timestamp < now {
+		return timestamp
 	}
 
-	if finalTime > currentTime {
-		finalTime = currentTime
-	}
-
-	return finalTime
+	return now
 }

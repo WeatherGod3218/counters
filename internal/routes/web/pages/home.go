@@ -15,6 +15,7 @@ func GetHomePage(c *gin.Context) {
 	user, err := users.GetCSHAuth(c)
 	if err != nil {
 		c.Status(http.StatusUnauthorized)
+		return
 	}
 
 	counters, err := database.GetCounters(c.Request.Context())
