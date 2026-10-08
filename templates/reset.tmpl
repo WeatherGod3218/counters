@@ -3,14 +3,16 @@
 
     <div class="container main p-5">
       <h2 class="mb-4">Reset Counter</h2>
-      <form action="/reset/{{.Id}}" method="POST">
+        <form id="reset-form" method="dialog" class="needs-validation" novalidate>
         <div class="input-group needs-validation my-3">
           <label for="reset-description" class="input-group-text required-label">Event</label>
           <input
             type="text"
             class="form-control"
+            id="reset-description"
             name="reset-description"
             placeholder="What happened"
+            pattern=".*\S.*"          
             required
           >
         </div>
@@ -19,6 +21,7 @@
             <input
               type="datetime-local"
               class="form-control"
+              id="reset-time"
               name="reset-time"
             />
           </div>
@@ -34,17 +37,53 @@
     <script>
       (() => {
         'use strict'
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+
+        const input = document.getElementById("reset-time");
+
+        const now = new Date();
+        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        const formatted = local.toISOString().slice(0, 16);
+
+        input.value = formatted;
+        
         const forms = document.querySelectorAll('.needs-validation')
 
-        // Loop over them and prevent submission
         Array.from(forms).forEach(form => {
-          form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-              event.preventDefault()
-              event.stopPropagation()
+          form.addEventListener('submit', async event => {
+            event.preventDefault()
+
+            if (!form.checkValidity()) return;
+
+            const data = Object.fromEntries(new FormData(form));
+            const button = form.querySelector('[type="submit"]');
+            if (button) button.disabled = true;
+
+            const resetBody = {
+              "counter_id": {{ .Id }},
+              "description": data["reset-description"],
+              "reset_time": data['reset-time']
+              ? new Date(data['reset-time']).toISOString()
+              : null,
             }
 
+            try {
+              const response = await fetch('/api/v1/reset', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(resetBody),
+              });
+
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              window.location.replace("/counter/" + {{ .Id}});
+              
+              form.reset();
+              form.classList.remove('was-validated');
+            } catch (err) {
+              console.error('Error:', err);
+            } finally {
+              if (button) button.disabled = false;
+            }
             form.classList.add('was-validated')
           }, false)
         })

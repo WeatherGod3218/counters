@@ -9,7 +9,7 @@ This project ALSO uses a modified version of bootstrap 5! Check it out [here!](h
 
 ## Local Development
 ### Installing
-1. Clone and cd into the repo: git clone https://github.com/WeatherGod3218/counters
+1. Clone and cd into the repo: git clone https://github.com/ComputerScienceHouse/counters
 >> (OPTIONAL): Make another branch if your working on a large thing!
 
 ### Setup

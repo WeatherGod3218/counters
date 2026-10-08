@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/WeatherGod3218/counters/database"
+	"github.com/ComputerScienceHouse/counters/internal/database"
+	v1 "github.com/ComputerScienceHouse/counters/internal/routes/api/v1"
+	"github.com/ComputerScienceHouse/counters/internal/routes/web"
 	"github.com/gin-gonic/gin"
 
-	"github.com/WeatherGod3218/counters/logging"
+	"github.com/ComputerScienceHouse/counters/internal/logging"
 	"github.com/sirupsen/logrus"
 
 	cshAuth "github.com/computersciencehouse/csh-auth/v2"
@@ -16,7 +18,6 @@ import (
 var DEV_FORCE_IS_EBOARD bool = os.Getenv("DEV_FORCE_IS_EBOARD") == "true"
 
 func main() {
-	database.Client = database.Connect()
 
 	hostUrl := os.Getenv("SERVER_HOST")
 	auth, err := cshAuth.Init(
@@ -32,6 +33,9 @@ func main() {
 		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "main", "method": "main"}).Fatal("error initializing csh-auth")
 	}
 
+	if err := database.InitDatabase(); err != nil {
+		logging.Logger.WithFields(logrus.Fields{"error": err, "module": "main", "method": "main"}).Fatal("error initializing database")
+	}
 	router := gin.Default()
 
 	router.StaticFS("/static", http.Dir("static"))
@@ -43,17 +47,8 @@ func main() {
 
 	router.Use(auth.CookieMiddleware())
 
-	router.GET("/", GetHomePage)
-	router.GET("/counters/:id", LoadCounter)
-
-	router.GET("/create", GetCreatePage)
-	router.POST("/create", CreateCounter)
-
-	router.GET("/reset/:id", GetResetPage)
-	router.POST("/reset/:id", ResetCounter)
-
-	router.POST("/delete/counter", DeleteCounter)
-	router.POST("/delete/reset", DeleteReset)
+	web.Routes(router.Group(""))
+	v1.Routes(router.Group(""))
 
 	router.Run(":8080")
 }
