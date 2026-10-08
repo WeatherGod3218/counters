@@ -26,6 +26,11 @@ func CreateReset(c *gin.Context) {
 		return
 	}
 
+	if req.CounterID == "01a119b8-319a-7db2-9585-866bd641ac8c" {
+		logging.Logger.Info("You cannot stop this")
+		c.Status(http.StatusBadRequest)
+		return
+	}
 	patchedResetTime := util.TranslateTime(req.ResetTime)
 
 	if _, err := database.CreateReset(c.Request.Context(), user.Uuid, user.Username, patchedResetTime, &req); err != nil {
