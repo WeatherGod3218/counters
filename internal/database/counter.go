@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ComputerScienceHouse/counters/internal/models"
+	"github.com/ComputerScienceHouse/counters/internal/util"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -29,7 +30,9 @@ func CreateCounterWithReset(ctx context.Context, userId string, username string,
 		return "", err
 	}
 
-	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, rReq)
+	patchedResetTime := util.TranslateTime(rReq.ResetTime)
+
+	resetID, err := CreateResetWithTransaction(ctx, tx, userId, username, patchedResetTime, rReq)
 	if err != nil {
 		return "", err
 	}
